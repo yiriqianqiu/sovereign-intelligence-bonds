@@ -1,0 +1,17 @@
+{
+  "chapel": {
+    "NFARegistry": { "address": "0x802E67532B974ece533702311a66fEE000c1C325", "startBlock": 0 },
+    "SIBBondManager": { "address": "0xb3EDaBF3334C37b926b99bAE6D23c8126099baB8", "startBlock": 0 },
+    "DividendVaultV2": { "address": "0x66efb45Cd439CF3a216Df8682FFbebDc554729f1", "startBlock": 0 },
+    "TokenRegistry": { "address": "0xC5824Ce1cbfFC4A13C2C31191606407de100eB65", "startBlock": 0 },
+    "BondDEX": { "address": "0xB881e50fD22020a1774CAC535f00A77493350271", "startBlock": 0 },
+    "TranchingEngine": { "address": "0xf70901dA7D9FCDE6aAAF38CcE56D353fA37E0595", "startBlock": 0 },
+    "SIBControllerV2": { "address": "0xD1B48E15Fa47B5AeA35A2f8327Bd8773fb4826d4", "startBlock": 0 },
+    "X402PaymentReceiverV2": { "address": "0xFe053fFa3F3A873Bfc5f65E5000D4e4FcD4C8c1F", "startBlock": 0 },
+    "BondholderGovernor": { "address": "0xdAe3DBC6e07d2C028D04aeCfe60084f4816b8135", "startBlock": 0 },
+    "LiquidationEngine": { "address": "0xB0a1f8055bb7C276007ccc8E193719375D5b0418", "startBlock": 0 },
+    "AutoCompoundVault": { "address": "0xbD1506A35aD79f076cd035a8312448E50718ad13", "startBlock": 0 },
+    "IndexBond": { "address": "0x4ACDd6F2a9dB84ca5455529eC7F24b4BcC174F1f", "startBlock": 0 },
+    "BondCollateralWrapper": { "address": "0xaA1D9058A9970a8C00abF768eff21e2c0B86Cf7B", "startBlock": 0 }
+  }
+}

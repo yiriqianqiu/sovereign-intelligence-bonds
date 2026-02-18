@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap');
+
+@layer base {
+  :root {
+    /* SIB Design System: Agent Wall Street */
+    /* Warm dark palette with gold accent */
+    --background: 16 14 12;        /* #100E0C - deep walnut black */
+    --foreground: 245 241 235;     /* #F5F1EB - warm cream white */
+    --card: 26 23 20;             /* #1A1714 - dark walnut */
+    --card-foreground: 245 241 235;
+    --popover: 26 23 20;
+    --popover-foreground: 245 241 235;
+    --primary: 212 168 83;        /* #D4A853 - antique gold */
+    --primary-foreground: 16 14 12;
+    --secondary: 38 34 30;        /* #26221E - warm charcoal */
+    --secondary-foreground: 200 192 180;
+    --muted: 38 34 30;
+    --muted-foreground: 148 140 128;  /* #948C80 - warm gray */
+    --accent: 212 168 83;
+    --accent-foreground: 16 14 12;
+    --destructive: 185 65 55;     /* #B94137 - muted crimson */
+    --destructive-foreground: 245 241 235;
+    --success: 90 138 110;        /* #5A8A6E - sage green */
+    --success-foreground: 245 241 235;
+    --border: 50 45 40;           /* #322D28 */
+    --input: 50 45 40;
+    --ring: 212 168 83;
+    --radius: 0.5rem;
+
+    /* Chart colors */
+    --chart-gold: #D4A853;
+    --chart-sage: #5A8A6E;
+    --chart-copper: #B87333;
+    --chart-slate: #8A8578;
+    --chart-crimson: #B94137;
+  }
+}
+
+@layer base {
+  * {
+    border-color: rgb(var(--border));
+  }
+  body {
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+    font-family: 'DM Sans', 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+  }
+  code, pre, .font-mono {
+    font-family: 'Fira Code', monospace;
+  }
+}
+
+@layer components {
+  .card-glass {
+    background: rgba(26, 23, 20, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 168, 83, 0.1);
+  }
+  .card-glass:hover {
+    border-color: rgba(212, 168, 83, 0.25);
+  }
+  .text-gold {
+    color: #D4A853;
+  }
+  .text-sage {
+    color: #5A8A6E;
+  }
+  .text-crimson {
+    color: #B94137;
+  }
+  .bg-gold {
+    background-color: #D4A853;
+  }
+  .glow-gold {
+    box-shadow: 0 0 20px rgba(212, 168, 83, 0.15);
+  }
+  .stat-value {
+    font-family: 'Fira Code', monospace;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

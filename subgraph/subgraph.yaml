@@ -1,0 +1,348 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: NFARegistry
+    network: chapel
+    source:
+      address: "0x802E67532B974ece533702311a66fEE000c1C325"
+      abi: NFARegistry
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Agent
+        - ProtocolStats
+      abis:
+        - name: NFARegistry
+          file: ./abis/NFARegistry.json
+      eventHandlers:
+        - event: AgentRegistered(indexed uint256,indexed address,string)
+          handler: handleAgentRegistered
+        - event: AgentStateChanged(indexed uint256,uint8)
+          handler: handleAgentStateChanged
+        - event: CreditRatingUpdated(indexed uint256,uint8)
+          handler: handleCreditRatingUpdated
+        - event: CreditFactorsUpdated(indexed uint256)
+          handler: handleCreditFactorsUpdated
+        - event: SharpeUpdated(indexed uint256,uint256,bytes32)
+          handler: handleSharpeUpdated
+        - event: RevenueRecorded(indexed uint256,uint256,uint256)
+          handler: handleRevenueRecorded
+      file: ./src/mappings/nfa-registry.ts
+
+  - kind: ethereum
+    name: SIBBondManager
+    network: chapel
+    source:
+      address: "0xb3EDaBF3334C37b926b99bAE6D23c8126099baB8"
+      abi: SIBBondManager
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - BondClass
+        - BondNonce
+        - ProtocolStats
+      abis:
+        - name: SIBBondManager
+          file: ./abis/SIBBondManager.json
+      eventHandlers:
+        - event: BondClassCreated(indexed uint256,uint256,uint256,uint256,uint256,uint256,uint8,address)
+          handler: handleBondClassCreated
+        - event: BondNonceCreated(indexed uint256,indexed uint256,uint256)
+          handler: handleBondNonceCreated
+        - event: BondMarkedRedeemable(indexed uint256,indexed uint256)
+          handler: handleBondMarkedRedeemable
+      file: ./src/mappings/bond-manager.ts
+
+  - kind: ethereum
+    name: DividendVaultV2
+    network: chapel
+    source:
+      address: "0x66efb45Cd439CF3a216Df8682FFbebDc554729f1"
+      abi: DividendVaultV2
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - DividendDistribution
+        - DividendClaim
+        - ProtocolStats
+      abis:
+        - name: DividendVaultV2
+          file: ./abis/DividendVaultV2.json
+      eventHandlers:
+        - event: DividendDeposited(indexed uint256,indexed uint256,indexed address,uint256,uint256)
+          handler: handleDividendDeposited
+        - event: DividendClaimed(indexed address,indexed uint256,indexed uint256,address,uint256)
+          handler: handleDividendClaimed
+        - event: WaterfallDistributed(uint256,uint256,uint256,uint256)
+          handler: handleWaterfallDistributed
+      file: ./src/mappings/dividend-vault-v2.ts
+
+  - kind: ethereum
+    name: TokenRegistry
+    network: chapel
+    source:
+      address: "0xC5824Ce1cbfFC4A13C2C31191606407de100eB65"
+      abi: TokenRegistry
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - TokenInfo
+      abis:
+        - name: TokenRegistry
+          file: ./abis/TokenRegistry.json
+      eventHandlers:
+        - event: TokenAdded(indexed address,string)
+          handler: handleTokenAdded
+        - event: TokenRemoved(indexed address)
+          handler: handleTokenRemoved
+        - event: TokenPriceUpdated(indexed address,uint256)
+          handler: handleTokenPriceUpdated
+      file: ./src/mappings/token-registry.ts
+
+  - kind: ethereum
+    name: BondDEX
+    network: chapel
+    source:
+      address: "0xB881e50fD22020a1774CAC535f00A77493350271"
+      abi: BondDEX
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - DEXOrder
+        - ProtocolStats
+      abis:
+        - name: BondDEX
+          file: ./abis/BondDEX.json
+      eventHandlers:
+        - event: OrderCreated(indexed uint256,indexed address,uint256,uint256,uint256,uint256,bool)
+          handler: handleOrderCreated
+        - event: OrderFilled(indexed uint256,indexed address,uint256,uint256)
+          handler: handleOrderFilled
+        - event: OrderCancelled(indexed uint256)
+          handler: handleOrderCancelled
+      file: ./src/mappings/bond-dex.ts
+
+  - kind: ethereum
+    name: TranchingEngine
+    network: chapel
+    source:
+      address: "0xf70901dA7D9FCDE6aAAF38CcE56D353fA37E0595"
+      abi: TranchingEngine
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - TrancheGroup
+      abis:
+        - name: TranchingEngine
+          file: ./abis/TranchingEngine.json
+      eventHandlers:
+        - event: TrancheGroupCreated(indexed uint256,indexed uint256,uint256,uint256)
+          handler: handleTrancheGroupCreated
+      file: ./src/mappings/tranching-engine.ts
+
+  - kind: ethereum
+    name: SIBControllerV2
+    network: chapel
+    source:
+      address: "0xD1B48E15Fa47B5AeA35A2f8327Bd8773fb4826d4"
+      abi: SIBControllerV2
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - IPO
+        - Purchase
+        - RevenueEvent
+        - ProtocolStats
+      abis:
+        - name: SIBControllerV2
+          file: ./abis/SIBControllerV2.json
+      eventHandlers:
+        - event: IPOInitiated(indexed uint256,indexed uint256,uint256,uint256,uint256,address)
+          handler: handleIPOInitiated
+        - event: TranchedIPOInitiated(indexed uint256,indexed uint256,uint256,uint256)
+          handler: handleTranchedIPOInitiated
+        - event: BondsPurchased(indexed address,indexed uint256,uint256,uint256,uint256,address)
+          handler: handleBondsPurchased
+        - event: X402RevenueReceived(indexed uint256,indexed address,uint256,uint256,uint256)
+          handler: handleX402RevenueReceived
+        - event: DividendsDistributed(indexed uint256,uint256,address,uint256)
+          handler: handleDividendsDistributed
+        - event: SharpeProofVerified(indexed uint256,uint256,bytes32)
+          handler: handleSharpeProofVerified
+        - event: BondsRedeemed(indexed address,indexed uint256,uint256,uint256)
+          handler: handleBondsRedeemed
+        - event: BondsTransferred(indexed address,indexed address,indexed uint256,uint256,uint256)
+          handler: handleBondsTransferred
+      file: ./src/mappings/controller-v2.ts
+
+  - kind: ethereum
+    name: X402PaymentReceiverV2
+    network: chapel
+    source:
+      address: "0xFe053fFa3F3A873Bfc5f65E5000D4e4FcD4C8c1F"
+      abi: X402PaymentReceiverV2
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - X402Payment
+      abis:
+        - name: X402PaymentReceiverV2
+          file: ./abis/X402PaymentReceiverV2.json
+      eventHandlers:
+        - event: PaymentReceived(indexed address,indexed uint256,indexed address,string,uint256)
+          handler: handlePaymentReceived
+      file: ./src/mappings/x402-v2.ts
+
+  - kind: ethereum
+    name: BondholderGovernor
+    network: chapel
+    source:
+      address: "0xdAe3DBC6e07d2C028D04aeCfe60084f4816b8135"
+      abi: BondholderGovernor
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - GovernanceProposal
+        - Vote
+      abis:
+        - name: BondholderGovernor
+          file: ./abis/BondholderGovernor.json
+      eventHandlers:
+        - event: ProposalCreated(indexed uint256,uint256,uint8,uint256,address)
+          handler: handleProposalCreated
+        - event: Voted(indexed uint256,indexed address,bool,uint256)
+          handler: handleVoted
+        - event: ProposalExecuted(indexed uint256)
+          handler: handleProposalExecuted
+        - event: ProposalCancelled(indexed uint256)
+          handler: handleProposalCancelled
+      file: ./src/mappings/governor.ts
+
+  - kind: ethereum
+    name: LiquidationEngine
+    network: chapel
+    source:
+      address: "0xB0a1f8055bb7C276007ccc8E193719375D5b0418"
+      abi: LiquidationEngine
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Liquidation
+      abis:
+        - name: LiquidationEngine
+          file: ./abis/LiquidationEngine.json
+      eventHandlers:
+        - event: LiquidationTriggered(indexed uint256,uint256)
+          handler: handleLiquidationTriggered
+        - event: LiquidationExecuted(indexed uint256)
+          handler: handleLiquidationExecuted
+        - event: LiquidationCancelled(indexed uint256)
+          handler: handleLiquidationCancelled
+      file: ./src/mappings/liquidation.ts
+
+  - kind: ethereum
+    name: AutoCompoundVault
+    network: chapel
+    source:
+      address: "0xbD1506A35aD79f076cd035a8312448E50718ad13"
+      abi: AutoCompoundVault
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AutoCompoundEvent
+      abis:
+        - name: AutoCompoundVault
+          file: ./abis/AutoCompoundVault.json
+      eventHandlers:
+        - event: Deposited(indexed address,uint256,uint256,uint256)
+          handler: handleDeposited
+        - event: Withdrawn(indexed address,uint256,uint256,uint256)
+          handler: handleWithdrawn
+        - event: Compounded(indexed uint256,indexed uint256,uint256,uint256)
+          handler: handleCompounded
+      file: ./src/mappings/auto-compound.ts
+
+  - kind: ethereum
+    name: IndexBond
+    network: chapel
+    source:
+      address: "0x4ACDd6F2a9dB84ca5455529eC7F24b4BcC174F1f"
+      abi: IndexBond
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - IndexBondEntity
+      abis:
+        - name: IndexBond
+          file: ./abis/IndexBond.json
+      eventHandlers:
+        - event: IndexCreated(indexed uint256,string,uint256)
+          handler: handleIndexCreated
+        - event: IndexMinted(indexed uint256,indexed address,uint256)
+          handler: handleIndexMinted
+        - event: IndexRedeemed(indexed uint256,indexed address,uint256)
+          handler: handleIndexRedeemed
+        - event: IndexRebalanced(indexed uint256)
+          handler: handleIndexRebalanced
+      file: ./src/mappings/index-bond.ts
+
+  - kind: ethereum
+    name: BondCollateralWrapper
+    network: chapel
+    source:
+      address: "0xaA1D9058A9970a8C00abF768eff21e2c0B86Cf7B"
+      abi: BondCollateralWrapper
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - CollateralWrap
+      abis:
+        - name: BondCollateralWrapper
+          file: ./abis/BondCollateralWrapper.json
+      eventHandlers:
+        - event: Wrapped(indexed uint256,indexed address,uint256,uint256,uint256)
+          handler: handleWrapped
+        - event: Unwrapped(indexed uint256,indexed address,uint256,uint256,uint256)
+          handler: handleUnwrapped
+      file: ./src/mappings/collateral-wrapper.ts

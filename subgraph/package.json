@@ -1,0 +1,17 @@
+{
+  "name": "sib-protocol-subgraph",
+  "version": "0.1.0",
+  "description": "Subgraph for Sovereign Intelligence Bonds Protocol v2",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ sib-protocol",
+    "create-local": "graph create --node http://localhost:8020/ sib-protocol",
+    "remove-local": "graph remove --node http://localhost:8020/ sib-protocol",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 sib-protocol"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "^0.71.0",
+    "@graphprotocol/graph-ts": "^0.35.1"
+  }
+}

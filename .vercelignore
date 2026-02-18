@@ -1,0 +1,9 @@
+contracts/
+tee-agent/
+prover-service/
+zkml/
+subgraph/
+docs/
+*.key
+*.pf
+*.onnx

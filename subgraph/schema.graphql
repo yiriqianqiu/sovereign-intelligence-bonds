@@ -1,0 +1,201 @@
+type Agent @entity {
+  id: ID!
+  owner: Bytes!
+  name: String!
+  description: String
+  state: Int!
+  creditRating: Int!
+  sharpeRatio: BigInt!
+  totalEarned: BigInt!
+  bondClasses: [BondClass!]! @derivedFrom(field: "agent")
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type BondClass @entity {
+  id: ID!
+  agent: Agent!
+  agentId: BigInt!
+  classId: BigInt!
+  couponRateBps: BigInt!
+  maturityPeriod: BigInt!
+  sharpeAtIssue: BigInt!
+  maxSupply: BigInt!
+  tranche: Int!
+  paymentToken: Bytes!
+  nonces: [BondNonce!]! @derivedFrom(field: "bondClass")
+  createdAt: BigInt!
+}
+
+type BondNonce @entity {
+  id: ID!
+  bondClass: BondClass!
+  nonceId: BigInt!
+  pricePerBond: BigInt!
+  redeemable: Boolean!
+  createdAt: BigInt!
+}
+
+type DEXOrder @entity {
+  id: ID!
+  orderId: BigInt!
+  maker: Bytes!
+  classId: BigInt!
+  nonceId: BigInt!
+  amount: BigInt!
+  filledAmount: BigInt!
+  pricePerBond: BigInt!
+  paymentToken: Bytes
+  isSell: Boolean!
+  active: Boolean!
+  createdAt: BigInt!
+}
+
+type DividendDistribution @entity {
+  id: ID!
+  classId: BigInt!
+  nonceId: BigInt!
+  token: Bytes!
+  amount: BigInt!
+  accPerBond: BigInt!
+  timestamp: BigInt!
+}
+
+type DividendClaim @entity {
+  id: ID!
+  holder: Bytes!
+  classId: BigInt!
+  nonceId: BigInt!
+  token: Bytes!
+  amount: BigInt!
+  timestamp: BigInt!
+}
+
+type GovernanceProposal @entity {
+  id: ID!
+  proposalId: BigInt!
+  classId: BigInt!
+  proposalType: Int!
+  newValue: BigInt!
+  proposer: Bytes!
+  forVotes: BigInt!
+  againstVotes: BigInt!
+  state: String!
+  votes: [Vote!]! @derivedFrom(field: "proposal")
+  createdAt: BigInt!
+}
+
+type Vote @entity {
+  id: ID!
+  proposal: GovernanceProposal!
+  voter: Bytes!
+  support: Boolean!
+  weight: BigInt!
+  timestamp: BigInt!
+}
+
+type RevenueEvent @entity {
+  id: ID!
+  agentId: BigInt!
+  token: Bytes!
+  amount: BigInt!
+  bondholderShare: BigInt!
+  ownerShare: BigInt!
+  timestamp: BigInt!
+}
+
+type IPO @entity {
+  id: ID!
+  agentId: BigInt!
+  classId: BigInt!
+  nonceId: BigInt!
+  couponRateBps: BigInt!
+  pricePerBond: BigInt!
+  paymentToken: Bytes!
+  timestamp: BigInt!
+}
+
+type Purchase @entity {
+  id: ID!
+  buyer: Bytes!
+  classId: BigInt!
+  nonceId: BigInt!
+  amount: BigInt!
+  totalCost: BigInt!
+  paymentToken: Bytes!
+  timestamp: BigInt!
+}
+
+type Liquidation @entity {
+  id: ID!
+  agentId: BigInt!
+  gracePeriodEnd: BigInt!
+  executed: Boolean!
+  cancelled: Boolean!
+  triggeredAt: BigInt!
+}
+
+type TrancheGroup @entity {
+  id: ID!
+  groupId: BigInt!
+  agentId: BigInt!
+  seniorClassId: BigInt!
+  juniorClassId: BigInt!
+}
+
+type IndexBondEntity @entity {
+  id: ID!
+  indexId: BigInt!
+  name: String!
+  componentCount: BigInt!
+  active: Boolean!
+  createdAt: BigInt!
+}
+
+type CollateralWrap @entity {
+  id: ID!
+  tokenId: BigInt!
+  owner: Bytes!
+  classId: BigInt!
+  nonceId: BigInt!
+  amount: BigInt!
+  wrapped: Boolean!
+}
+
+type X402Payment @entity {
+  id: ID!
+  payer: Bytes!
+  agentId: BigInt!
+  token: Bytes!
+  endpoint: String!
+  amount: BigInt!
+  timestamp: BigInt!
+}
+
+type TokenInfo @entity {
+  id: ID!
+  address: Bytes!
+  symbol: String!
+  priceUsd: BigInt!
+  active: Boolean!
+  addedAt: BigInt!
+}
+
+type AutoCompoundEvent @entity {
+  id: ID!
+  type: String!
+  user: Bytes
+  classId: BigInt!
+  nonceId: BigInt!
+  amount: BigInt!
+  timestamp: BigInt!
+}
+
+type ProtocolStats @entity {
+  id: ID!
+  totalAgents: BigInt!
+  totalBondClasses: BigInt!
+  totalOrders: BigInt!
+  totalRevenue: BigInt!
+  totalDividends: BigInt!
+}

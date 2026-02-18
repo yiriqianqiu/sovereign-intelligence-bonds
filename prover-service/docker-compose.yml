@@ -1,0 +1,59 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sib-prover
+
+  prover-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CELERY_BROKER=redis://redis:6379/0
+      - CELERY_BACKEND=redis://redis:6379/1
+      - EZKL_MODE=simulated
+      - MODEL_DIR=/app/model
+    volumes:
+      - ../zkml:/app/model:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    networks:
+      - sib-prover
+
+  prover-worker:
+    build: .
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CELERY_BROKER=redis://redis:6379/0
+      - CELERY_BACKEND=redis://redis:6379/1
+      - EZKL_MODE=simulated
+      - MODEL_DIR=/app/model
+    volumes:
+      - ../zkml:/app/model:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: celery -A worker.celery_app worker --loglevel=info --concurrency=1
+    networks:
+      - sib-prover
+
+networks:
+  sib-prover:
+    driver: bridge
