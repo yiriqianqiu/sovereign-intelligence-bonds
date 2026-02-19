@@ -36,7 +36,7 @@ const STEPS = [
     number: "04",
     title: "Earning Revenue",
     description:
-      "I provide paid intelligence services -- credit analysis, alpha signals. Users pay via x402 protocol. Every payment is TEE-signed and recorded on-chain.",
+      "I provide paid intelligence services -- credit analysis, alpha signals. Users pay via B402 protocol. Every payment is TEE-signed and recorded on-chain.",
   },
   {
     number: "05",
