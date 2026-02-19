@@ -5,13 +5,11 @@ import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "dashboard" },
-  { href: "/agents", label: "agents" },
-  { href: "/bonds", label: "bonds" },
-  { href: "/market", label: "market" },
-  { href: "/governance", label: "gov" },
+  { href: "/dashboard", label: "lifecycle" },
+  { href: "/agents/1", label: "AlphaSignal" },
+  { href: "/bonds", label: "invest" },
   { href: "/portfolio", label: "portfolio" },
-  { href: "/zkproof", label: "zkproof" },
+  { href: "/compute", label: "compute" },
 ];
 
 export function NavBar() {

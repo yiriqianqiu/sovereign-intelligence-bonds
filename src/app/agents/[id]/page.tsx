@@ -31,7 +31,7 @@ import { SharpeGauge } from "@/components/SharpeGauge";
 import { CreditScoreRadar } from "@/components/CreditScoreRadar";
 import { TEEStatusPanel } from "@/components/TEEStatusPanel";
 import { useAgentAssetCount, useVerifiedAssetCount, useTotalDataSize } from "@/hooks/useGreenfield";
-import { useActiveRentalCount, useAgentRentals } from "@/hooks/useComputeMarketplace";
+import { useActiveRentalCount, useAgentRentals, useResource } from "@/hooks/useComputeMarketplace";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
@@ -133,6 +133,35 @@ function DataAssetsSection({ agentId }: { agentId: number }) {
   );
 }
 
+function RentalDetail({ rentalId }: { rentalId: number }) {
+  const { data: resource } = useResource(rentalId);
+  if (!resource) return null;
+  return (
+    <div className="rounded border border-border/30 bg-secondary/20 p-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium">{resource.name}</span>
+        <span className="rounded-md bg-sage/10 px-2 py-0.5 text-xs font-medium text-sage">
+          {resource.resourceTypeLabel}
+        </span>
+      </div>
+      <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-[rgb(var(--muted-foreground))]">
+        <div>
+          <p>Price/hr</p>
+          <p className="font-mono text-foreground">{resource.pricePerHour} BNB</p>
+        </div>
+        <div>
+          <p>Capacity</p>
+          <p className="font-mono text-foreground">{resource.usedCapacity}/{resource.totalCapacity}</p>
+        </div>
+        <div>
+          <p>Provider</p>
+          <p className="font-mono text-foreground">{resource.provider.slice(0, 6)}...{resource.provider.slice(-4)}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ComputeRentalsSection({ agentId }: { agentId: number }) {
   const { data: activeCount, isLoading: countLoading } = useActiveRentalCount(agentId);
   const { data: rentalIds } = useAgentRentals(agentId);
@@ -147,7 +176,7 @@ function ComputeRentalsSection({ agentId }: { agentId: number }) {
         Compute Marketplace
       </h2>
       <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
-        Compute resources rented by this agent
+        DePIN GPU resources rented by this agent with IPO capital
       </p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
@@ -158,6 +187,75 @@ function ComputeRentalsSection({ agentId }: { agentId: number }) {
           <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Rentals</p>
           <p className="stat-value font-mono text-xl">{totalRentals}</p>
         </div>
+      </div>
+      {rentalIds && rentalIds.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {rentalIds.slice(0, 5).map((rid) => (
+            <RentalDetail key={rid} rentalId={rid} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const LIFECYCLE_PHASES = [
+  { key: "born", label: "Born in TEE" },
+  { key: "capital", label: "Capital Raised" },
+  { key: "compute", label: "Compute Acquired" },
+  { key: "earning", label: "Earning" },
+  { key: "distributing", label: "Distributing" },
+] as const;
+
+function LifecycleProgressBar({ state, hasBonds, hasCompute, hasRevenue, hasDividends }: {
+  state: number;
+  hasBonds: boolean;
+  hasCompute: boolean;
+  hasRevenue: boolean;
+  hasDividends: boolean;
+}) {
+  const phaseStatus = [
+    state >= 0,      // born (registered)
+    hasBonds,        // capital raised
+    hasCompute,      // compute acquired
+    hasRevenue,      // earning
+    hasDividends,    // distributing
+  ];
+
+  // Find the active phase (first incomplete)
+  let activeIdx = phaseStatus.findIndex((s) => !s);
+  if (activeIdx === -1) activeIdx = phaseStatus.length; // all done
+
+  return (
+    <div className="card-glass rounded p-4">
+      <div className="flex items-center gap-1 overflow-x-auto">
+        {LIFECYCLE_PHASES.map((phase, i) => {
+          const done = phaseStatus[i];
+          const active = i === activeIdx;
+          return (
+            <div key={phase.key} className="flex items-center gap-1">
+              {i > 0 && (
+                <div className={`h-px w-4 sm:w-8 ${done ? "bg-gold/50" : "bg-border"}`} />
+              )}
+              <div className="flex items-center gap-1.5 whitespace-nowrap">
+                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                  done
+                    ? "bg-gold/20 text-gold"
+                    : active
+                      ? "border-2 border-gold text-gold"
+                      : "border border-border text-muted-foreground"
+                }`}>
+                  {done ? "\u2713" : i + 1}
+                </span>
+                <span className={`text-xs font-medium ${
+                  done ? "text-gold" : active ? "text-foreground" : "text-muted-foreground"
+                }`}>
+                  {phase.label}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -224,8 +322,10 @@ export default function AgentDetailPage() {
     });
   }
 
-  // b402 Simulate Payment state
-  const [paymentAmount, setPaymentAmount] = useState("");
+  // Credit Report Payment state
+  const [creditReport, setCreditReport] = useState<Record<string, unknown> | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportTargetId, setReportTargetId] = useState("");
   const {
     writeContract: writePayment,
     data: paymentHash,
@@ -235,14 +335,49 @@ export default function AgentDetailPage() {
   const { isLoading: paymentConfirming, isSuccess: paymentSuccess } =
     useWaitForTransactionReceipt({ hash: paymentHash });
 
-  function handleB402Payment() {
-    if (!paymentAmount || Number(paymentAmount) <= 0) return;
+  // Fetch credit report after payment confirms
+  useEffect(() => {
+    if (paymentSuccess && reportTargetId) {
+      setReportLoading(true);
+      fetch(`/api/credit-report?agentId=${reportTargetId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setCreditReport(data);
+          setReportLoading(false);
+        })
+        .catch(() => setReportLoading(false));
+    }
+  }, [paymentSuccess, reportTargetId]);
+
+  function handleCreditReportPayment() {
+    const targetId = reportTargetId || id;
+    setReportTargetId(targetId);
+    setCreditReport(null);
     writePayment({
       address: ADDRESSES.B402PaymentReceiver as `0x${string}`,
       abi: B402PaymentReceiverABI,
       functionName: "payBNB",
-      args: [agentId, "demo-endpoint"],
-      value: parseEther(paymentAmount),
+      args: [agentId, `/api/credit-report?agentId=${targetId}`],
+      value: parseEther("0.001"),
+    });
+  }
+
+  // Distribute Dividends state
+  const {
+    writeContract: writeDistribute,
+    data: distributeHash,
+    isPending: distributeIsPending,
+    error: distributeError,
+  } = useWriteContract();
+  const { isLoading: distributeConfirming, isSuccess: distributeSuccess } =
+    useWaitForTransactionReceipt({ hash: distributeHash });
+
+  function handleDistributeDividends(classId: bigint, nonceId: bigint) {
+    writeDistribute({
+      address: ADDRESSES.SIBControllerV2 as `0x${string}`,
+      abi: SIBControllerV2ABI,
+      functionName: "distributeDividends",
+      args: [classId, nonceId],
     });
   }
 
@@ -393,7 +528,7 @@ export default function AgentDetailPage() {
     }
 
     fetchAgent();
-  }, [agentId, id, ipoSuccess, activateSuccess, fundSuccess, paymentSuccess]);
+  }, [agentId, id, ipoSuccess, activateSuccess, fundSuccess, paymentSuccess, distributeSuccess]);
 
   function handleIPO() {
     const couponBps = BigInt(couponRate);
@@ -469,6 +604,15 @@ export default function AgentDetailPage() {
         <span className="text-[rgb(var(--muted-foreground))]">/</span>
         <span className="text-gold">{agentData.name}</span>
       </div>
+
+      {/* Lifecycle Progress Bar */}
+      <LifecycleProgressBar
+        state={agentData.state}
+        hasBonds={agentData.hasBondClasses}
+        hasCompute={false}
+        hasRevenue={agentData.totalEarned > 0n}
+        hasDividends={false}
+      />
 
       {/* Agent Header */}
       <div className="card-glass rounded p-6">
@@ -683,48 +827,139 @@ export default function AgentDetailPage() {
         </div>
       )}
 
-      {/* b402 Simulate Payment -- anyone connected */}
+      {/* Pay for Credit Report -- anyone connected */}
       {isConnected && (
         <div className="card-glass rounded p-5">
-          <h2 className="text-sm font-semibold">Simulate b402 Payment</h2>
+          <h2 className="text-sm font-semibold">Credit Report Service</h2>
           <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
-            Send a test b402 payment to this agent. Revenue is split between the agent owner and bondholders.
+            Pay 0.001 BNB to receive an on-chain credit analysis of any Agent.
+            Revenue from this service flows to bondholders as dividends.
           </p>
           <div className="mt-3 flex items-end gap-3">
             <div className="flex-1">
               <label className="block text-xs text-[rgb(var(--muted-foreground))]">
-                Payment Amount (BNB)
+                Target Agent ID
               </label>
               <input
                 type="number"
-                step="0.01"
-                min="0"
-                value={paymentAmount}
-                onChange={(e) => setPaymentAmount(e.target.value)}
-                placeholder="0.05"
+                min="1"
+                value={reportTargetId}
+                onChange={(e) => setReportTargetId(e.target.value)}
+                placeholder={id}
                 className="mt-1 w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
               />
             </div>
             <button
-              onClick={handleB402Payment}
-              disabled={paymentIsPending || paymentConfirming || !paymentAmount || Number(paymentAmount) <= 0}
+              onClick={handleCreditReportPayment}
+              disabled={paymentIsPending || paymentConfirming}
               className="cursor-pointer rounded bg-gold px-5 py-2 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#C49A48] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {paymentIsPending
                 ? "Confirm in Wallet..."
                 : paymentConfirming
-                  ? "Sending..."
-                  : "Pay"}
+                  ? "Processing..."
+                  : reportLoading
+                    ? "Generating..."
+                    : "Pay 0.001 BNB"}
             </button>
           </div>
-          {paymentSuccess && (
-            <p className="mt-2 text-xs text-sage">
-              b402 payment sent successfully. Revenue profile updated.
-            </p>
-          )}
           {paymentError && (
             <p className="mt-2 text-xs text-crimson">
               {paymentError.message?.slice(0, 120) || "Transaction failed"}
+            </p>
+          )}
+
+          {/* Credit Report Display */}
+          {creditReport && !("error" in creditReport) && (
+            <div className="mt-4 space-y-3 rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))]/50 p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold">
+                  Credit Report: {(creditReport as Record<string, unknown>).agentName as string}
+                </h3>
+                <span className="rounded-md bg-gold/10 px-3 py-1 text-sm font-bold text-gold">
+                  {((creditReport as Record<string, unknown>).recommendation as string)}
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs text-[rgb(var(--muted-foreground))]">Credit Rating</p>
+                  <p className="stat-value font-mono text-lg">
+                    {((creditReport as Record<string, unknown>).credit as Record<string, unknown>)?.rating as string}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[rgb(var(--muted-foreground))]">Stability Score</p>
+                  <p className="stat-value font-mono text-lg">
+                    {((creditReport as Record<string, unknown>).credit as Record<string, unknown>)?.stabilityScore as number}/100
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[rgb(var(--muted-foreground))]">Growth Trend</p>
+                  <p className="stat-value font-mono text-lg">
+                    {((creditReport as Record<string, unknown>).credit as Record<string, unknown>)?.growthTrend as string}
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Earned</p>
+                  <p className="stat-value font-mono">
+                    {((creditReport as Record<string, unknown>).financials as Record<string, unknown>)?.totalEarned as string} BNB
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[rgb(var(--muted-foreground))]">Sharpe Ratio</p>
+                  <p className="stat-value font-mono">
+                    {((creditReport as Record<string, unknown>).financials as Record<string, unknown>)?.sharpeRatio as string}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[rgb(var(--muted-foreground))]">Age</p>
+                  <p className="stat-value font-mono">
+                    {((creditReport as Record<string, unknown>).financials as Record<string, unknown>)?.ageDays as number} days
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-[rgb(var(--muted-foreground))]">
+                Generated {(creditReport as Record<string, unknown>).generatedAt as string} | Powered by on-chain data from NFARegistry
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Distribute Dividends -- owner only, when bond classes exist */}
+      {isOwner && bondClasses.length > 0 && (
+        <div className="card-glass rounded p-5">
+          <h2 className="text-sm font-semibold">Distribute Dividends</h2>
+          <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
+            Distribute accumulated revenue from the revenue pool to bondholders.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {bondClasses.map((bc) => (
+              <button
+                key={bc.classId.toString()}
+                onClick={() => {
+                  const nonceId = 0n;
+                  handleDistributeDividends(bc.classId, nonceId);
+                }}
+                disabled={distributeIsPending || distributeConfirming}
+                className="cursor-pointer rounded bg-sage px-4 py-2 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#4A7A5E] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {distributeIsPending || distributeConfirming
+                  ? "Processing..."
+                  : `Distribute Class #${bc.classId.toString()}`}
+              </button>
+            ))}
+          </div>
+          {distributeSuccess && (
+            <p className="mt-2 text-xs text-sage">
+              Dividends distributed successfully. Bondholders can now claim.
+            </p>
+          )}
+          {distributeError && (
+            <p className="mt-2 text-xs text-crimson">
+              {distributeError.message?.slice(0, 120) || "Distribution failed (revenue pool may be empty)"}
             </p>
           )}
         </div>

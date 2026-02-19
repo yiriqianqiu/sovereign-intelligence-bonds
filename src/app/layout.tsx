@@ -10,8 +10,8 @@ const NavBar = dynamic(() => import("@/components/NavBar").then((m) => m.NavBar)
 });
 
 export const metadata: Metadata = {
-  title: "Sovereign Intelligence Bonds",
-  description: "Securitize AI Agent revenue streams through ERC-3475 bonds. Agent Wall Street.",
+  title: "AlphaSignal — Sovereign Intelligence Bonds",
+  description: "The first sovereign intelligence entity on BNB Chain. ERC-3475 bonds backed by TEE-verified AI revenue.",
 };
 
 export default function RootLayout({

@@ -13,8 +13,28 @@ export const config = {
   greenfieldVaultAddress: process.env.GREENFIELD_VAULT_ADDRESS as `0x${string}` || "0x862CaFca80f90eB7d83dDb5d21a6dbb1FcFc172B",
   computeMarketplaceAddress: process.env.COMPUTE_MARKETPLACE_ADDRESS as `0x${string}` || "0xe279cF8E564c170EF89C7E63600d16CFd37d9D99",
 
-  // Agent configuration
-  agentId: parseInt(process.env.AGENT_ID || "1", 10),
+  // Agent configuration (used during self-registration)
+  agentId: parseInt(process.env.AGENT_ID || "0", 10),  // 0 = not registered yet, will self-register
+  agentName: process.env.AGENT_NAME || "AlphaSignal",
+  agentDescription: process.env.AGENT_DESCRIPTION || "Autonomous market intelligence agent -- on-chain credit analysis and alpha signal generation for the Agent economy. Running in Phala TEE.",
+  agentModelHash: process.env.AGENT_MODEL_HASH || "QmAlphaSignal2026v3-TEE",
+  agentEndpoint: process.env.AGENT_ENDPOINT || "https://alpha.sib.datafi/api/v1",
+
+  // IPO configuration
+  ipoCouponBps: parseInt(process.env.IPO_COUPON_BPS || "500", 10),         // 5% APY
+  ipoMaturityDays: parseInt(process.env.IPO_MATURITY_DAYS || "90", 10),     // 90 days
+  ipoPriceBnb: process.env.IPO_PRICE_BNB || "0.01",                        // 0.01 BNB per bond
+  ipoMaxSupply: parseInt(process.env.IPO_MAX_SUPPLY || "100", 10),          // 100 bonds
+
+  // Compute rental configuration
+  computeResourceId: parseInt(process.env.COMPUTE_RESOURCE_ID || "1", 10),
+  computeRentalUnits: parseInt(process.env.COMPUTE_RENTAL_UNITS || "1", 10),
+  computeRentalHours: parseInt(process.env.COMPUTE_RENTAL_HOURS || "24", 10),
+
+  // Service pricing
+  creditReportPriceBnb: process.env.CREDIT_REPORT_PRICE_BNB || "0.001",
+
+  // Prover service
   proverServiceUrl: process.env.PROVER_SERVICE_URL || "http://localhost:8000",
 
   // Scheduler intervals (ms)

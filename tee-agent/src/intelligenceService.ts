@@ -1,7 +1,8 @@
 import { parseAbi, formatEther } from "viem";
 import { publicClient } from "./chain.js";
 import { config } from "./config.js";
-import { NFARegistryABI, SIBControllerV2ABI } from "./abis.js";
+import { NFARegistryABI, SIBControllerV2ABI, B402ReceiverABI } from "./abis.js";
+import { getComputeStatus } from "./computeManager.js";
 
 const LOG_PREFIX = "[intelligence]";
 
@@ -10,6 +11,7 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as const;
 export interface IntelligenceReport {
   agentId: number;
   timestamp: string;
+  teeVerified: boolean;
   agent: {
     name: string;
     active: boolean;
@@ -18,13 +20,16 @@ export interface IntelligenceReport {
   };
   revenue: {
     totalRevenue: string;
-    avgMonthlyRevenue: string;
-    revenueCount: number;
+    verifiedRevenue: string;
   };
   bondMarket: {
     bondClassCount: number;
     bondClasses: string[];
     revenuePoolBnb: string;
+  };
+  compute: {
+    hasCompute: boolean;
+    activeRentals: number;
   };
   risk: {
     grade: string;
@@ -42,23 +47,37 @@ function computeRiskGrade(score: number): { grade: string; description: string }
   return { grade: "F", description: "Very High Risk - Insufficient data or critical issues" };
 }
 
-export async function generatePreviewReport(agentId: number): Promise<Pick<IntelligenceReport, "agentId" | "timestamp" | "agent" | "risk" | "warnings">> {
+export async function generatePreviewReport(agentId: number): Promise<Pick<IntelligenceReport, "agentId" | "timestamp" | "teeVerified" | "agent" | "risk" | "warnings">> {
   const warnings: string[] = [];
   let creditScore = 0;
   let name = "Unknown";
   let active = false;
 
   try {
-    const agentData = await publicClient.readContract({
-      address: config.nfaRegistryAddress,
-      abi: parseAbi(NFARegistryABI),
-      functionName: "agents",
-      args: [BigInt(agentId)],
-    }) as [string, string, string, bigint, boolean, string, bigint, bigint, bigint, bigint, string];
+    const [metadata, state, score] = await Promise.all([
+      publicClient.readContract({
+        address: config.nfaRegistryAddress,
+        abi: parseAbi(NFARegistryABI),
+        functionName: "getAgentMetadata",
+        args: [BigInt(agentId)],
+      }) as Promise<readonly [string, string, string, string, bigint]>,
+      publicClient.readContract({
+        address: config.nfaRegistryAddress,
+        abi: parseAbi(NFARegistryABI),
+        functionName: "getAgentState",
+        args: [BigInt(agentId)],
+      }) as Promise<number>,
+      publicClient.readContract({
+        address: config.nfaRegistryAddress,
+        abi: parseAbi(NFARegistryABI),
+        functionName: "getCreditScore",
+        args: [BigInt(agentId)],
+      }) as Promise<bigint>,
+    ]);
 
-    name = agentData[0];
-    active = agentData[4];
-    creditScore = Number(agentData[9]);
+    name = metadata[0];
+    active = Number(state) === 1;
+    creditScore = Number(score);
   } catch (err) {
     console.error(`${LOG_PREFIX} Failed to read agent data:`, err);
     warnings.push("Could not read agent data from NFARegistry");
@@ -69,11 +88,12 @@ export async function generatePreviewReport(agentId: number): Promise<Pick<Intel
   return {
     agentId,
     timestamp: new Date().toISOString(),
+    teeVerified: true,
     agent: {
       name,
       active,
       creditScore,
-      owner: null, // omitted in preview
+      owner: null,
     },
     risk: {
       grade: riskInfo.grade,
@@ -88,23 +108,31 @@ export async function generateFullReport(agentId: number): Promise<IntelligenceR
   const warnings: string[] = [];
   const bigAgentId = BigInt(agentId);
 
-  // Read agent data from NFARegistry
   let name = "Unknown";
   let active = false;
   let creditScore = 0;
   let owner: string | null = null;
-  let totalRevenue = 0n;
-  let avgMonthlyRevenue = 0n;
-  let revenueCount = 0n;
 
   try {
-    const [agentData, agentOwner] = await Promise.all([
+    const [metadata, state, score, agentOwner] = await Promise.all([
       publicClient.readContract({
         address: config.nfaRegistryAddress,
         abi: parseAbi(NFARegistryABI),
-        functionName: "agents",
+        functionName: "getAgentMetadata",
         args: [bigAgentId],
-      }) as Promise<[string, string, string, bigint, boolean, string, bigint, bigint, bigint, bigint, string]>,
+      }) as Promise<readonly [string, string, string, string, bigint]>,
+      publicClient.readContract({
+        address: config.nfaRegistryAddress,
+        abi: parseAbi(NFARegistryABI),
+        functionName: "getAgentState",
+        args: [bigAgentId],
+      }) as Promise<number>,
+      publicClient.readContract({
+        address: config.nfaRegistryAddress,
+        abi: parseAbi(NFARegistryABI),
+        functionName: "getCreditScore",
+        args: [bigAgentId],
+      }) as Promise<bigint>,
       publicClient.readContract({
         address: config.nfaRegistryAddress,
         abi: parseAbi(NFARegistryABI),
@@ -113,19 +141,42 @@ export async function generateFullReport(agentId: number): Promise<IntelligenceR
       }) as Promise<string>,
     ]);
 
-    name = agentData[0];
-    active = agentData[4];
-    totalRevenue = agentData[6];
-    avgMonthlyRevenue = agentData[7];
-    revenueCount = agentData[8];
-    creditScore = Number(agentData[9]);
+    name = metadata[0];
+    active = Number(state) === 1;
+    creditScore = Number(score);
     owner = agentOwner !== ZERO_ADDRESS ? agentOwner : null;
   } catch (err) {
     console.error(`${LOG_PREFIX} Failed to read agent data:`, err);
     warnings.push("Could not read agent data from NFARegistry");
   }
 
-  // Read bond market data from SIBControllerV2
+  // Read TEE-verified revenue
+  let verifiedRevenue = 0n;
+  try {
+    verifiedRevenue = await publicClient.readContract({
+      address: config.b402ReceiverAddress,
+      abi: parseAbi(B402ReceiverABI),
+      functionName: "verifiedRevenue",
+      args: [bigAgentId],
+    }) as bigint;
+  } catch {
+    warnings.push("Could not read verified revenue from B402");
+  }
+
+  // Read total payments
+  let totalRevenue = 0n;
+  try {
+    totalRevenue = await publicClient.readContract({
+      address: config.b402ReceiverAddress,
+      abi: parseAbi(B402ReceiverABI),
+      functionName: "agentTotalPayments",
+      args: [bigAgentId, ZERO_ADDRESS],
+    }) as bigint;
+  } catch {
+    // skip
+  }
+
+  // Read bond market data
   let bondClasses: bigint[] = [];
   let revenuePoolBnb = 0n;
 
@@ -146,18 +197,22 @@ export async function generateFullReport(agentId: number): Promise<IntelligenceR
       address: config.sibControllerAddress,
       abi: parseAbi(SIBControllerV2ABI),
       functionName: "revenuePool",
-      args: [bigAgentId, ZERO_ADDRESS], // native BNB uses zero address
+      args: [bigAgentId, ZERO_ADDRESS],
     }) as bigint;
   } catch (err) {
     console.error(`${LOG_PREFIX} Failed to read revenue pool:`, err);
-    warnings.push("Could not read revenue pool balance from SIBControllerV2");
+    warnings.push("Could not read revenue pool balance");
   }
 
   const riskInfo = computeRiskGrade(creditScore);
 
+  // Read compute status
+  const computeInfo = await getComputeStatus(agentId);
+
   return {
     agentId,
     timestamp: new Date().toISOString(),
+    teeVerified: true,
     agent: {
       name,
       active,
@@ -166,14 +221,14 @@ export async function generateFullReport(agentId: number): Promise<IntelligenceR
     },
     revenue: {
       totalRevenue: formatEther(totalRevenue),
-      avgMonthlyRevenue: formatEther(avgMonthlyRevenue),
-      revenueCount: Number(revenueCount),
+      verifiedRevenue: formatEther(verifiedRevenue),
     },
     bondMarket: {
       bondClassCount: bondClasses.length,
       bondClasses: bondClasses.map((c) => c.toString()),
       revenuePoolBnb: formatEther(revenuePoolBnb),
     },
+    compute: computeInfo,
     risk: {
       grade: riskInfo.grade,
       creditScore,

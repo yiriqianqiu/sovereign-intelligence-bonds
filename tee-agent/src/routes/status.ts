@@ -3,6 +3,7 @@ import { parseAbi } from "viem";
 import { publicClient } from "../chain.js";
 import { config } from "../config.js";
 import { TEERegistryABI, SIBControllerV2ABI } from "../abis.js";
+import { getComputeStatus } from "../computeManager.js";
 
 const router = Router();
 
@@ -26,6 +27,9 @@ router.get("/status/:agentId", async (req: Request, res: Response) => {
       args: [agentId],
     }) as bigint[];
 
+    // Get compute status
+    const compute = await getComputeStatus(Number(agentId));
+
     res.json({
       agentId: req.params.agentId,
       tee: {
@@ -36,6 +40,8 @@ router.get("/status/:agentId", async (req: Request, res: Response) => {
       },
       bondClassesCount: bondClasses.length,
       bondClasses: bondClasses.map((c) => c.toString()),
+      compute,
+      lifecycle: "Register -> IPO -> Compute -> Earn -> Dividends",
     });
   } catch (error) {
     res.status(500).json({

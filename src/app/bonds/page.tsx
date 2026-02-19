@@ -190,9 +190,9 @@ export default function BondsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="font-heading text-xl font-bold tracking-tight">Bond Market</h1>
+        <h1 className="font-heading text-xl font-bold tracking-tight">Invest in AlphaSignal</h1>
         <p className="mt-1 text-xs text-muted-foreground">
-          ERC-3475 bonds backed by AI agent revenue streams
+          ERC-3475 bonds backed by TEE-verified AI revenue. Your capital funds compute. Compute generates revenue. Revenue pays dividends.
         </p>
       </div>
 
