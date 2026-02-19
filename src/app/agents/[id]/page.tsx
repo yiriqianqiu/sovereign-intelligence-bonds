@@ -342,7 +342,7 @@ export default function AgentDetailPage() {
   useEffect(() => {
     if (paymentSuccess && reportTargetId) {
       setReportLoading(true);
-      fetch(`/api/credit-report?agentId=${reportTargetId}`)
+      fetch(`/api/credit-report?agentId=${reportTargetId}&txHash=${paymentHash}`)
         .then((res) => res.json())
         .then((data) => {
           setCreditReport(data);

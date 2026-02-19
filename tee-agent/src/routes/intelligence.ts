@@ -1,12 +1,12 @@
 import { Router, Request, Response } from "express";
 import { generatePreviewReport, generateFullReport } from "../intelligenceService.js";
-import { submitVerifiedRevenue } from "../receiptSigner.js";
+import { verifyPaymentOnChain } from "../receiptSigner.js";
 
 const router = Router();
 
 const MIN_PAYMENT_BNB = "0.001";
 
-// Free preview - basic intelligence
+// Free preview - basic intelligence (limited data)
 router.get("/api/intelligence/:agentId", async (req: Request, res: Response) => {
   try {
     const agentId = parseInt(req.params.agentId, 10);
@@ -24,7 +24,9 @@ router.get("/api/intelligence/:agentId", async (req: Request, res: Response) => 
   }
 });
 
-// Paid full report - requires BNB payment
+// Paid full report - requires on-chain payment proof
+// User must first pay via B402PaymentReceiver.payBNB on-chain,
+// then submit the txHash here. TEE verifies the receipt before serving.
 router.post("/api/intelligence/:agentId", async (req: Request, res: Response) => {
   try {
     const agentId = parseInt(req.params.agentId, 10);
@@ -33,46 +35,41 @@ router.post("/api/intelligence/:agentId", async (req: Request, res: Response) =>
       return;
     }
 
-    const { amountBnb } = req.body as { amountBnb?: string };
-    if (!amountBnb || parseFloat(amountBnb) < parseFloat(MIN_PAYMENT_BNB)) {
+    const { txHash } = req.body as { txHash?: string };
+    if (!txHash) {
       res.status(402).json({
         error: "Payment required",
         minimumBnb: MIN_PAYMENT_BNB,
-        message: `Full intelligence report requires a minimum payment of ${MIN_PAYMENT_BNB} BNB`,
+        message: `Pay via B402PaymentReceiver.payBNB first, then submit txHash`,
         paymentInstructions: {
-          method: "POST",
-          body: { amountBnb: MIN_PAYMENT_BNB },
+          contract: "B402PaymentReceiver",
+          method: "payBNB(uint256 agentId, string endpoint)",
+          minimumBnb: MIN_PAYMENT_BNB,
+          then: "POST /api/intelligence/:agentId with { txHash }",
         },
       });
       return;
     }
 
-    // Process payment via TEE-verified b402 (payBNBVerified)
-    // TEE signs a receipt proving this revenue is from real API execution
-    let txHash: string;
-    try {
-      const result = await submitVerifiedRevenue(agentId, amountBnb, "/api/intelligence");
-      if (!result) {
-        throw new Error("TEE receipt generation failed");
-      }
-      txHash = result.txHash;
-      console.log("[intelligence] TEE-verified payment confirmed:", txHash);
-    } catch (paymentError) {
-      console.error("[intelligence] Payment failed:", paymentError);
+    // Verify payment on-chain: check tx receipt confirms real payment to B402
+    const verified = await verifyPaymentOnChain(txHash, agentId, MIN_PAYMENT_BNB);
+    if (!verified.valid) {
       res.status(402).json({
-        error: "Payment failed",
-        minimumBnb: MIN_PAYMENT_BNB,
-        details: paymentError instanceof Error ? paymentError.message : "Unknown payment error",
+        error: "Payment verification failed",
+        detail: verified.reason,
       });
       return;
     }
 
-    // Generate full report after successful verified payment
+    console.log("[intelligence] Payment verified on-chain:", txHash);
+
+    // Generate full report after verified payment
     const report = await generateFullReport(agentId);
 
     res.json({
       paymentTxHash: txHash,
       teeVerified: true,
+      payerAddress: verified.payer,
       report,
     });
   } catch (error) {

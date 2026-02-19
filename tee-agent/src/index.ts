@@ -60,6 +60,7 @@ async function main() {
       process.exit(1);
     }
     agentId = registeredId;
+    config.agentId = agentId; // Propagate to schedulers (attestation, dividends)
     console.log(`[phase-1] Agent #${agentId} born in TEE\n`);
   } else {
     console.log(`[phase-1] Agent #${agentId} already registered, skipping\n`);

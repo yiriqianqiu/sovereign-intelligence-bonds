@@ -53,7 +53,7 @@ Data Layer:
 | Contract | Address | Purpose |
 |---|---|---|
 | NFARegistry | 0x802E67532B974ece533702311a66fEE000c1C325 | Agent identity + credit scoring |
-| SIBControllerV2 | 0xc6a65c7268980DAAde58Fac12F9a3Ce2D2A881ab | Core controller (IPO/dividends/proof/TEE) |
+| SIBControllerV2 | 0xF71C0a2fFEB12AE11fcbB97fbe3edc5Ea8273F7f | Core controller (IPO/dividends/proof/TEE) |
 | SIBBondManager | 0xb3EDaBF3334C37b926b99bAE6D23c8126099baB8 | ERC-3475 bond mint/transfer/redeem |
 | DividendVaultV2 | 0x66efb45Cd439CF3a216Df8682FFbebDc554729f1 | MasterChef dividend accumulator |
 | TranchingEngine | 0xf70901dA7D9FCDE6aAAF38CcE56D353fA37E0595 | Senior/junior waterfall |

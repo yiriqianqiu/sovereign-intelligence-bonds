@@ -966,4 +966,101 @@ describe("SIBControllerV2", function () {
       assert.ok(bal >= ethers.parseEther("1.0"));
     });
   });
+
+  // =================== IPO Capital Release Tests ===================
+
+  describe("releaseIPOCapital", function () {
+    it("should accumulate ipoCapital on bond purchase", async function () {
+      const { controller, registry, tokenRegistry, agentOwner, investor1, ethers } = await deployAll();
+      const agentId = await registerAndActivate(registry, agentOwner);
+
+      // BNB (address(0)) is auto-supported by TokenRegistry constructor
+
+      // Initiate IPO
+      const price = ethers.parseEther("0.01");
+      await controller.connect(agentOwner).initiateIPO(agentId, 500, 86400 * 90, price, 100, "0x0000000000000000000000000000000000000000");
+
+      // Purchase 10 bonds
+      const classIds = await controller.getAgentBondClasses(agentId);
+      const classId = classIds[0];
+      const totalCost = price * 10n;
+      await controller.connect(investor1).purchaseBondsBNB(classId, 10, { value: totalCost });
+
+      // Check ipoCapital accumulated
+      const cap = await controller.ipoCapital(agentId, "0x0000000000000000000000000000000000000000");
+      assert.equal(cap, totalCost);
+    });
+
+    it("should release IPO capital to authorized caller", async function () {
+      const { controller, registry, tokenRegistry, agentOwner, investor1, ethers } = await deployAll();
+      const agentId = await registerAndActivate(registry, agentOwner);
+
+      // BNB (address(0)) is auto-supported by TokenRegistry constructor
+      const price = ethers.parseEther("0.01");
+      await controller.connect(agentOwner).initiateIPO(agentId, 500, 86400 * 90, price, 100, "0x0000000000000000000000000000000000000000");
+
+      const classIds = await controller.getAgentBondClasses(agentId);
+      const classId = classIds[0];
+      const totalCost = price * 10n;
+      await controller.connect(investor1).purchaseBondsBNB(classId, 10, { value: totalCost });
+
+      // Agent owner releases capital
+      const balBefore = await ethers.provider.getBalance(agentOwner.address);
+      await controller.connect(agentOwner).releaseIPOCapital(agentId, "0x0000000000000000000000000000000000000000", totalCost);
+      const balAfter = await ethers.provider.getBalance(agentOwner.address);
+
+      // Balance should increase (minus gas)
+      assert.ok(balAfter > balBefore - ethers.parseEther("0.01"));
+
+      // ipoCapital should be 0
+      const cap = await controller.ipoCapital(agentId, "0x0000000000000000000000000000000000000000");
+      assert.equal(cap, 0n);
+    });
+
+    it("should reject release from unauthorized caller", async function () {
+      const { controller, registry, tokenRegistry, agentOwner, investor1, outsider, ethers } = await deployAll();
+      const agentId = await registerAndActivate(registry, agentOwner);
+
+      // BNB (address(0)) is auto-supported by TokenRegistry constructor
+      const price = ethers.parseEther("0.01");
+      await controller.connect(agentOwner).initiateIPO(agentId, 500, 86400 * 90, price, 100, "0x0000000000000000000000000000000000000000");
+
+      const classIds = await controller.getAgentBondClasses(agentId);
+      await controller.connect(investor1).purchaseBondsBNB(classIds[0], 10, { value: price * 10n });
+
+      // Outsider tries to release - should fail
+      await assert.rejects(
+        controller.connect(outsider).releaseIPOCapital(agentId, "0x0000000000000000000000000000000000000000", price * 10n),
+        /not authorized/
+      );
+    });
+
+    it("should reject release exceeding available capital", async function () {
+      const { controller, registry, tokenRegistry, agentOwner, investor1, ethers } = await deployAll();
+      const agentId = await registerAndActivate(registry, agentOwner);
+
+      // BNB (address(0)) is auto-supported by TokenRegistry constructor
+      const price = ethers.parseEther("0.01");
+      await controller.connect(agentOwner).initiateIPO(agentId, 500, 86400 * 90, price, 100, "0x0000000000000000000000000000000000000000");
+
+      const classIds = await controller.getAgentBondClasses(agentId);
+      await controller.connect(investor1).purchaseBondsBNB(classIds[0], 10, { value: price * 10n });
+
+      // Try to release more than available
+      await assert.rejects(
+        controller.connect(agentOwner).releaseIPOCapital(agentId, "0x0000000000000000000000000000000000000000", price * 20n),
+        /insufficient capital/
+      );
+    });
+
+    it("should reject release of zero amount", async function () {
+      const { controller, registry, tokenRegistry, agentOwner, ethers } = await deployAll();
+      const agentId = await registerAndActivate(registry, agentOwner);
+
+      await assert.rejects(
+        controller.connect(agentOwner).releaseIPOCapital(agentId, "0x0000000000000000000000000000000000000000", 0),
+        /zero amount/
+      );
+    });
+  });
 });

@@ -88,7 +88,7 @@ Data Layer:
 
 | Contract | Address |
 |---|---|
-| SIBControllerV2 | `0xc6a65c7268980DAAde58Fac12F9a3Ce2D2A881ab` |
+| SIBControllerV2 | `0xF71C0a2fFEB12AE11fcbB97fbe3edc5Ea8273F7f` |
 | SIBBondManager | `0xb3EDaBF3334C37b926b99bAE6D23c8126099baB8` |
 | NFARegistry | `0x802E67532B974ece533702311a66fEE000c1C325` |
 | DividendVaultV2 | `0x66efb45Cd439CF3a216Df8682FFbebDc554729f1` |

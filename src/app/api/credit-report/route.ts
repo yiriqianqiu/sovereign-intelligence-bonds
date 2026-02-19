@@ -92,9 +92,32 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const agentIdParam = searchParams.get("agentId");
+    const txHash = searchParams.get("txHash");
 
     if (!agentIdParam) {
       return Response.json({ error: "agentId parameter required" }, { status: 400 });
+    }
+
+    if (!txHash) {
+      return Response.json(
+        { error: "Payment required", message: "txHash parameter required — pay via B402PaymentReceiver.payBNB first" },
+        { status: 402 }
+      );
+    }
+
+    // Verify the payment transaction on-chain
+    try {
+      const receipt = await client.getTransactionReceipt({ hash: txHash as `0x${string}` });
+      if (!receipt || receipt.status !== "success") {
+        return Response.json({ error: "Payment transaction failed or not found" }, { status: 402 });
+      }
+      // Verify it went to B402PaymentReceiver
+      const b402Addr = (ADDRESSES.B402PaymentReceiver as string).toLowerCase();
+      if (receipt.to?.toLowerCase() !== b402Addr) {
+        return Response.json({ error: "Transaction is not a valid B402 payment" }, { status: 402 });
+      }
+    } catch {
+      return Response.json({ error: "Could not verify payment transaction" }, { status: 402 });
     }
 
     const agentId = BigInt(agentIdParam);
