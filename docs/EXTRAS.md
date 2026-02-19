@@ -1,6 +1,6 @@
 # Optional: Demo Video & Presentation
 
-- **Demo video**: _(coming soon)_
+- **Demo video**: https://youtu.be/2U6ZM3DNpX4
 - **Slide deck**: _(coming soon)_
 
 ---
