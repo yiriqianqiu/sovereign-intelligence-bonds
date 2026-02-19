@@ -55,24 +55,30 @@ export async function GET(request: Request) {
 
             send({
               proofId,
-              status: data.status,
+              status: data.status === "completed" ? "complete"
+                : data.status === "processing" ? "generating"
+                : data.status,
               message: data.message,
               progress: data.progress,
               ...(data.result
                 ? {
                     result: {
                       sharpeRatio: data.result.sharpe_ratio,
+                      proofHash: data.result.proof_hex
+                        ? "0x" + data.result.proof_hex.slice(2, 66)
+                        : "0x",
+                      verified: data.result.verified,
+                      circuitSize: data.result.instances?.length ?? 0,
+                      provingTime: `${data.result.proving_time}s`,
                       proofHex: data.result.proof_hex,
                       instances: data.result.instances,
-                      verified: data.result.verified,
-                      provingTime: `${data.result.proving_time}s`,
                       mode: data.result.mode,
                     },
                   }
                 : {}),
             });
 
-            if (data.status === "completed" || data.status === "failed") {
+            if (["completed", "complete", "failed"].includes(data.status)) {
               done = true;
             } else {
               await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
@@ -104,7 +110,7 @@ export async function GET(request: Request) {
 
         send({
           proofId,
-          status: "processing",
+          status: "generating",
           message: "Running zkML circuit compilation...",
           progress: 25,
         });
@@ -113,7 +119,7 @@ export async function GET(request: Request) {
 
         send({
           proofId,
-          status: "processing",
+          status: "generating",
           message: "Computing witness from daily returns...",
           progress: 50,
         });
@@ -122,7 +128,7 @@ export async function GET(request: Request) {
 
         send({
           proofId,
-          status: "processing",
+          status: "generating",
           message: "Generating KZG proof...",
           progress: 75,
         });
@@ -130,23 +136,31 @@ export async function GET(request: Request) {
         await new Promise((r) => setTimeout(r, 1500));
 
         const mockSharpe = (1.5 + Math.random() * 1.5).toFixed(2);
+        // Generate BN254-valid simulated proof and 31 instances
         const mockProofHex =
           "0x" +
-          Array.from({ length: 64 }, () =>
+          Array.from({ length: 6144 }, () =>
             Math.floor(Math.random() * 16).toString(16)
           ).join("");
+        const BN254_FIELD = BigInt("0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001");
+        const mockInstances = Array.from({ length: 31 }, (_, i) => {
+          const seed = BigInt(Date.now() + i * 1337) % BN254_FIELD;
+          return "0x" + seed.toString(16).padStart(64, "0");
+        });
 
         send({
           proofId,
-          status: "completed",
-          message: "Proof generation complete",
+          status: "complete",
+          message: "Proof generation complete (simulated)",
           progress: 100,
           result: {
             sharpeRatio: parseFloat(mockSharpe),
-            proofHex: mockProofHex,
-            instances: [],
+            proofHash: mockProofHex.slice(0, 66),
             verified: true,
+            circuitSize: 31,
             provingTime: "7.2s",
+            proofHex: mockProofHex,
+            instances: mockInstances,
             mode: "simulated (fallback)",
           },
         });

@@ -32,6 +32,7 @@ import { CreditScoreRadar } from "@/components/CreditScoreRadar";
 import { TEEStatusPanel } from "@/components/TEEStatusPanel";
 import { useAgentAssetCount, useVerifiedAssetCount, useTotalDataSize } from "@/hooks/useGreenfield";
 import { useActiveRentalCount, useAgentRentals, useResource } from "@/hooks/useComputeMarketplace";
+import { DividendVaultV2ABI } from "@/lib/contracts";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
@@ -272,6 +273,8 @@ export default function AgentDetailPage() {
   const [bondClasses, setBondClasses] = useState<BondClassInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasActiveCompute, setHasActiveCompute] = useState(false);
+  const [hasDividendsPaid, setHasDividendsPaid] = useState(false);
 
   // IPO form state
   const [couponRate, setCouponRate] = useState("500");
@@ -516,7 +519,36 @@ export default function AgentDetailPage() {
             }
           }
           setBondClasses(fetchedClasses);
+
+          // Check if any dividends have been paid
+          const BNB_TOKEN = "0x0000000000000000000000000000000000000000" as `0x${string}`;
+          for (const fc of fetchedClasses) {
+            try {
+              const deposited = await viemClient.readContract({
+                address: ADDRESSES.DividendVaultV2 as `0x${string}`,
+                abi: DividendVaultV2ABI,
+                functionName: "totalDeposited",
+                args: [fc.classId, 0n, BNB_TOKEN],
+              }) as bigint;
+              if (deposited > 0n) {
+                setHasDividendsPaid(true);
+                break;
+              }
+            } catch { /* skip */ }
+          }
         }
+
+        // Check compute status
+        try {
+          const { ComputeMarketplaceABI } = await import("@/lib/contracts");
+          const count = await viemClient.readContract({
+            address: ADDRESSES.ComputeMarketplace as `0x${string}`,
+            abi: ComputeMarketplaceABI,
+            functionName: "getActiveRentalCount",
+            args: [agentId],
+          }) as bigint;
+          setHasActiveCompute(Number(count) > 0);
+        } catch { /* skip */ }
 
         setLoading(false);
       } catch {
@@ -609,9 +641,9 @@ export default function AgentDetailPage() {
       <LifecycleProgressBar
         state={agentData.state}
         hasBonds={agentData.hasBondClasses}
-        hasCompute={false}
+        hasCompute={hasActiveCompute}
         hasRevenue={agentData.totalEarned > 0n}
-        hasDividends={false}
+        hasDividends={hasDividendsPaid}
       />
 
       {/* Agent Header */}
@@ -939,8 +971,17 @@ export default function AgentDetailPage() {
             {bondClasses.map((bc) => (
               <button
                 key={bc.classId.toString()}
-                onClick={() => {
-                  const nonceId = 0n;
+                onClick={async () => {
+                  // Read active nonce from contract instead of hardcoding 0
+                  let nonceId = 0n;
+                  try {
+                    nonceId = await viemClient.readContract({
+                      address: ADDRESSES.SIBControllerV2 as `0x${string}`,
+                      abi: SIBControllerV2ABI,
+                      functionName: "activeNonce",
+                      args: [bc.classId],
+                    }) as bigint;
+                  } catch { /* fallback to 0 */ }
                   handleDistributeDividends(bc.classId, nonceId);
                 }}
                 disabled={distributeIsPending || distributeConfirming}

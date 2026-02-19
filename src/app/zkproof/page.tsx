@@ -13,6 +13,9 @@ interface ProofResult {
   verified: boolean;
   circuitSize: number;
   provingTime: string;
+  proofHex?: string;     // raw proof bytes from prover (0x-prefixed hex)
+  instances?: string[];  // public instances from prover (0x-prefixed hex uint256[])
+  mode?: string;         // "real" | "simulated"
 }
 
 interface ProofState {
@@ -278,15 +281,26 @@ export default function ZkProofPage() {
   const handleSubmitOnChain = () => {
     if (selectedAgent === null || !proof.result) return;
 
-    // For demo: dummy proof bytes (64 bytes of zeros) and Sharpe ratio as instance
-    const dummyProof = ("0x" + "00".repeat(64)) as `0x${string}`;
-    const sharpeWei = parseEther(proof.result.sharpeRatio.toString());
+    // Use real proof bytes and instances from prover service when available
+    const proofBytes = (proof.result.proofHex || ("0x" + "00".repeat(64))) as `0x${string}`;
+
+    let instances: bigint[];
+    if (proof.result.instances && proof.result.instances.length > 0) {
+      // Real instances from prover — already 0x-prefixed big-endian uint256 hex
+      instances = proof.result.instances.map((inst) => {
+        const cleaned = inst.startsWith("0x") ? inst : `0x${inst}`;
+        return BigInt(cleaned);
+      });
+    } else {
+      // Fallback: use Sharpe ratio as single instance
+      instances = [parseEther(proof.result.sharpeRatio.toString())];
+    }
 
     writeContract({
       address: ADDRESSES.SIBControllerV2 as `0x${string}`,
       abi: parseAbi(SIBControllerV2ABI),
       functionName: "submitSharpeProof",
-      args: [BigInt(selectedAgent), dummyProof, [sharpeWei]],
+      args: [BigInt(selectedAgent), proofBytes, instances],
     });
   };
 
