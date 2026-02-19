@@ -220,7 +220,7 @@ export const NFARegistryV2ABI = [
   "function getAgentMetadata(uint256 agentId) view returns (string, string, string, string, uint256)",
   "function getAgentState(uint256 agentId) view returns (uint8)",
   "function getAgentOwner(uint256 agentId) view returns (address)",
-  "function getRevenueProfile(uint256 agentId) view returns (uint256, uint256, uint256, uint256, bytes32, uint8, uint256)",
+  "function getRevenueProfile(uint256 agentId) view returns (uint256, uint256, uint256, uint256, bytes32, uint256[12], uint8)",
   "function creditRatings(uint256 agentId) view returns (uint8)",
   "function getAgentBalance(uint256 agentId) view returns (uint256)",
   "function totalSupply() view returns (uint256)",

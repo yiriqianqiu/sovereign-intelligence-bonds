@@ -4,7 +4,7 @@ import { createPublicClient, http } from "viem";
 import { bscTestnet } from "viem/chains";
 import {
   NFARegistryABI,
-  SIBBondManagerABI,
+  SIBBondManagerV2ABI,
   SIBControllerV2ABI,
 } from "@/lib/contracts";
 import { ADDRESSES } from "@/lib/contract-addresses";
@@ -15,12 +15,12 @@ const client = createPublicClient({
 });
 
 const nfaAbi = NFARegistryABI;
-const bondAbi = SIBBondManagerABI;
+const bondAbi = SIBBondManagerV2ABI;
 const controllerAbi = SIBControllerV2ABI;
 
 const CREDIT_LABELS = ["Unrated", "C", "B", "A", "AA", "AAA"] as const;
 
-type BondClassTuple = readonly [bigint, bigint, bigint, bigint, bigint, boolean];
+type BondClassTuple = readonly [bigint, bigint, bigint, bigint, bigint, number, string, boolean];
 type BondNonceTuple = readonly [bigint, bigint, bigint, bigint, boolean, boolean];
 type AgentMetadataTuple = readonly [string, string, string, string, bigint];
 

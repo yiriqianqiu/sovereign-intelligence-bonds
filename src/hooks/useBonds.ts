@@ -3,7 +3,7 @@
 import { useReadContract } from "wagmi";
 import { parseAbi, formatEther } from "viem";
 import { ADDRESSES } from "@/lib/contract-addresses";
-import { SIBBondManagerABI, SIBControllerV2ABI } from "@/lib/contracts";
+import { SIBBondManagerV2ABI, SIBControllerV2ABI } from "@/lib/contracts";
 
 export interface BondClass {
   classId: number;
@@ -12,6 +12,8 @@ export interface BondClass {
   maturityPeriod: number;
   sharpeRatioAtIssue: string;
   maxSupply: number;
+  tranche: number;
+  paymentToken: string;
   exists: boolean;
 }
 
@@ -27,7 +29,7 @@ export interface BondNonce {
 export function useBondClass(classId: number | undefined) {
   const { data, isLoading, error, refetch } = useReadContract({
     address: ADDRESSES.SIBBondManager as `0x${string}`,
-    abi: parseAbi(SIBBondManagerABI),
+    abi: parseAbi(SIBBondManagerV2ABI),
     functionName: "bondClasses",
     args: classId !== undefined ? [BigInt(classId)] : undefined,
     query: { enabled: classId !== undefined },
@@ -35,7 +37,7 @@ export function useBondClass(classId: number | undefined) {
 
   const bondClass: BondClass | null = data
     ? (() => {
-        const d = data as unknown as readonly [bigint, bigint, bigint, bigint, bigint, boolean];
+        const d = data as unknown as readonly [bigint, bigint, bigint, bigint, bigint, number, string, boolean];
         return {
           classId: classId!,
           agentId: Number(d[0]),
@@ -43,7 +45,9 @@ export function useBondClass(classId: number | undefined) {
           maturityPeriod: Number(d[2]),
           sharpeRatioAtIssue: formatEther(d[3]),
           maxSupply: Number(d[4]),
-          exists: d[5],
+          tranche: Number(d[5]),
+          paymentToken: d[6] as string,
+          exists: d[7],
         };
       })()
     : null;
@@ -54,7 +58,7 @@ export function useBondClass(classId: number | undefined) {
 export function useBondNonce(classId: number | undefined, nonceId: number | undefined) {
   const { data, isLoading, error, refetch } = useReadContract({
     address: ADDRESSES.SIBBondManager as `0x${string}`,
-    abi: parseAbi(SIBBondManagerABI),
+    abi: parseAbi(SIBBondManagerV2ABI),
     functionName: "bondNonces",
     args:
       classId !== undefined && nonceId !== undefined
@@ -95,7 +99,7 @@ export function useActiveNonce(classId: number | undefined) {
 export function useBondBalance(account: `0x${string}` | undefined, classId: number | undefined, nonceId: number | undefined) {
   const { data, isLoading, error, refetch } = useReadContract({
     address: ADDRESSES.SIBBondManager as `0x${string}`,
-    abi: parseAbi(SIBBondManagerABI),
+    abi: parseAbi(SIBBondManagerV2ABI),
     functionName: "balanceOf",
     args:
       account && classId !== undefined && nonceId !== undefined
@@ -110,7 +114,7 @@ export function useBondBalance(account: `0x${string}` | undefined, classId: numb
 export function useBondTotalSupply(classId: number | undefined, nonceId: number | undefined) {
   const { data, isLoading, error, refetch } = useReadContract({
     address: ADDRESSES.SIBBondManager as `0x${string}`,
-    abi: parseAbi(SIBBondManagerABI),
+    abi: parseAbi(SIBBondManagerV2ABI),
     functionName: "totalSupply",
     args:
       classId !== undefined && nonceId !== undefined

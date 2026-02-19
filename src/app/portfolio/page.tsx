@@ -6,7 +6,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadCont
 import { formatEther } from "viem";
 import { createPublicClient, http } from "viem";
 import { bscTestnet } from "viem/chains";
-import { NFARegistryABI, SIBControllerV2ABI, SIBBondManagerABI, DividendVaultV2ABI } from "@/lib/contracts";
+import { NFARegistryABI, SIBControllerV2ABI, SIBBondManagerV2ABI, DividendVaultV2ABI } from "@/lib/contracts";
 import { ADDRESSES } from "@/lib/contract-addresses";
 import { DividendClaimButton } from "@/components/DividendClaimButton";
 import { useCollateralBalance } from "@/hooks/useBondCollateral";
@@ -108,16 +108,16 @@ export default function PortfolioPage() {
             // Read bond class info (v1 ABI: 6 values; d[1]=couponRateBps)
             const bondClass = await client.readContract({
               address: ADDRESSES.SIBBondManager as `0x${string}`,
-              abi: SIBBondManagerABI,
+              abi: SIBBondManagerV2ABI,
               functionName: "bondClasses",
               args: [classIdBig],
             });
-            const [, couponRateBps] = bondClass as [bigint, bigint, bigint, bigint, bigint, boolean];
+            const [, couponRateBps] = bondClass as [bigint, bigint, bigint, bigint, bigint, number, string, boolean];
 
             // Get number of nonces
             const nextNonce = await client.readContract({
               address: ADDRESSES.SIBBondManager as `0x${string}`,
-              abi: SIBBondManagerABI,
+              abi: SIBBondManagerV2ABI,
               functionName: "nextNonceId",
               args: [classIdBig],
             });
@@ -127,7 +127,7 @@ export default function PortfolioPage() {
             for (let n = 0; n < nonceCount; n++) {
               const balance = await client.readContract({
                 address: ADDRESSES.SIBBondManager as `0x${string}`,
-                abi: SIBBondManagerABI,
+                abi: SIBBondManagerV2ABI,
                 functionName: "balanceOf",
                 args: [userAddress as `0x${string}`, classIdBig, BigInt(n)],
               });
@@ -137,7 +137,7 @@ export default function PortfolioPage() {
               // Read nonce data
               const nonceData = await client.readContract({
                 address: ADDRESSES.SIBBondManager as `0x${string}`,
-                abi: SIBBondManagerABI,
+                abi: SIBBondManagerV2ABI,
                 functionName: "bondNonces",
                 args: [classIdBig, BigInt(n)],
               });

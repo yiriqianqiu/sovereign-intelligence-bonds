@@ -1,7 +1,7 @@
 import { createPublicClient, http, formatEther, parseAbi } from "viem";
 import { bscTestnet } from "viem/chains";
 import { ADDRESSES } from "./contract-addresses";
-import { NFARegistryABI, SIBBondManagerABI } from "./contracts";
+import { NFARegistryABI, SIBBondManagerV2ABI } from "./contracts";
 
 export const publicClient = createPublicClient({
   chain: bscTestnet,
@@ -98,12 +98,12 @@ export interface BondClassData {
 export async function getBondClassData(classId: bigint): Promise<BondClassData> {
   const result = await publicClient.readContract({
     address: ADDRESSES.SIBBondManager as `0x${string}`,
-    abi: parseAbi(SIBBondManagerABI),
+    abi: parseAbi(SIBBondManagerV2ABI),
     functionName: "bondClasses",
     args: [classId],
   });
 
-  const data = result as [bigint, bigint, bigint, bigint, bigint, boolean];
+  const data = result as [bigint, bigint, bigint, bigint, bigint, number, string, boolean];
   return {
     classId: Number(classId),
     agentId: Number(data[0]),
@@ -111,6 +111,6 @@ export async function getBondClassData(classId: bigint): Promise<BondClassData> 
     maturityPeriod: Number(data[2]),
     sharpeRatioAtIssue: formatEther(data[3]),
     maxSupply: Number(data[4]),
-    exists: data[5],
+    exists: data[7],
   };
 }
