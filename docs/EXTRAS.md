@@ -1,71 +1,97 @@
-# Agent Wall Street -- Additional Information
+# Optional: Demo Video & Presentation
 
-## Design Decisions
+- **Demo video**: _(coming soon)_
+- **Slide deck**: _(coming soon)_
 
-### Why ERC-3475 (not ERC-20 or ERC-721)?
+---
 
-ERC-3475 is a semi-fungible bond standard that supports multiple classes and nonces within a single contract. This is critical for Agent Wall Street because:
-- Each agent can have multiple bond classes (different coupon rates, maturities)
-- Each class can have multiple nonces (issuance batches)
-- Bonds of the same class/nonce are fungible (tradeable on BondDEX)
-- Different classes can represent senior vs junior tranches
-- Gas-efficient batch operations for transfers and redemptions
+# AI Build Log
 
-### Why zkML for Credit Ratings?
+This project was built primarily using **Claude Code** (Anthropic's CLI agent). Below is a record of how AI tools were used throughout development.
 
-Traditional DeFi credit scores rely on on-chain history that can be gamed. Agent Wall Street uses EZKL (Halo2 proving system) to generate zero-knowledge proofs of Sharpe ratios:
-- Agent submits off-chain performance data to the prover service
-- Prover generates a Halo2 proof that the claimed Sharpe ratio is correct
-- On-chain Halo2Verifier validates the proof without seeing raw data
-- This prevents strategy leakage while maintaining verifiable credit ratings
+## Tools Used
 
-### Why TEE (Trusted Execution Environment)?
+| Tool | Usage |
+|---|---|
+| **Claude Code (Claude Opus)** | Primary development tool -- contract architecture, Solidity implementation, test writing, frontend development, TEE agent, deployment scripts, debugging, documentation |
+| **EZKL** | zkML proof generation pipeline (PyTorch -> ONNX -> Halo2 proof -> Solidity verifier) |
 
-Without TEE, all agent operations require human signatures -- creating moral hazard (fake revenue, strategy manipulation). TEE provides:
-- Hardware-level isolation (Intel TDX via Phala dstack)
-- Remote attestation (cryptographic proof the code hasn't been tampered with)
-- Deterministic execution (same inputs always produce same outputs)
-- Key derivation from hardware (TEE wallet cannot be extracted)
+## How AI Was Used
 
-### Why MasterChef-style Dividends?
+### Phase 1: Contract Architecture (5 base contracts, 206 tests)
+- **AI role**: Designed the core contract architecture -- NFARegistry, SIBBondManager (ERC-3475), DividendVaultV2, SIBController, B402PaymentReceiver
+- **Key decision**: AI recommended ERC-3475 over ERC-1155 for bond representation, citing native support for classId/nonceId structure and financial metadata fields
+- **Key decision**: AI designed MasterChef accumulator pattern for O(1) gas dividend claims
 
-DividendVaultV2 uses a MasterChef accumulator pattern for O(1) gas dividend claims regardless of the number of distribution events. Without this, claiming dividends after 1000 distributions would require iterating through each one.
+### Phase 2: Financial Products (TranchingEngine, BondDEX, B402, 132 tests)
+- **AI role**: Implemented senior/junior tranche waterfall, on-chain limit order book, b402 payment protocol
+- **Key decision**: AI chose pull-over-push dividend model to prevent gas bombs and DoS vectors
 
-## Security Considerations
+### Phase 3: Advanced Features (Governor, Liquidation, AutoCompound, IndexBond, 116 tests)
+- **AI role**: Built bondholder governance, liquidation engine, auto-compound vault, index bonds, collateral wrapper
+- **Key decision**: AI designed credit-gated access for ComputeMarketplace -- agents need minimum credit rating to rent premium GPU resources
 
-- **Relay restriction**: B402PaymentReceiver has an optional relay whitelist to prevent fake revenue injection. When `relayRestricted` is true, only authorized TEE relays can submit payments.
-- **TEE attestation freshness**: getTEEStatus returns `isActive = false` if the last attestation is older than 24 hours, alerting investors that the TEE may be offline.
-- **Liquidation grace period**: LiquidationEngine provides a configurable grace period before execution, giving agents time to recover.
-- **Bondholder governance**: BondholderGovernor allows bondholders to vote on parameter changes (coupon rates, collateral requirements) with a quorum threshold.
+### Phase 4: zkML Pipeline (EZKL Halo2)
+- **AI role**: Built PyTorch Sharpe ratio model, ONNX export, EZKL circuit configuration
+- **AI role**: Designed prover service architecture (FastAPI + Celery + Redis)
+- **Key decision**: AI recommended separating proof generation into async worker queue to prevent API timeouts
 
-## Test Coverage
+### Phase 5: Frontend (17 pages, 5 APIs, 12 hooks)
+- **AI role**: Built complete Next.js 14 frontend with wagmi v2 hooks for all 18 contracts
+- **AI role**: Designed warm dark financial aesthetic ("Agent Wall Street" theme)
+- **Components**: 5D credit radar chart, bond order book, revenue area chart, dividend gauge
 
-707 tests across all contracts:
-- Unit tests for each contract in isolation
-- Integration tests for cross-contract workflows (IPO -> purchase -> revenue -> dividend -> claim)
-- TEE delegation tests (authorized TEE wallet can act on behalf of agent owner)
-- Edge cases: zero amounts, unauthorized access, reentrancy guards, overflow protection
+### Phase 6: E2E Integration (12 cross-contract scenarios)
+- **AI role**: Designed and implemented full lifecycle integration tests
 
-## Demo Lifecycle
+### Phase 7: Data Layer (GreenfieldDataVault, ComputeMarketplace, 114 tests)
+- **AI role**: Built decentralized data vault for agent performance data, compute marketplace with credit gating
 
-The `contracts/scripts/demo-lifecycle.ts` script demonstrates the full Agent Wall Street lifecycle in 9 steps:
+### Phase 8: TEE Integration (TEERegistry, TEE Agent, 46 tests)
+- **AI role**: Implemented TEE wallet authorization, remote attestation, controller delegation
+- **AI role**: Built autonomous TEE agent with 4-phase lifecycle (register -> IPO -> earn -> dividends)
 
-1. Deploy all contracts locally
-2. Wire permissions
-3. Register AI agent "AlphaSignal-01"
-4. Agent IPO: issue 100 bonds at 0.01 BNB each, 5% coupon
-5. Investor buys 10 bonds (0.1 BNB)
-6. Agent earns 0.03 BNB via 3 b402 intelligence payments
-7. Distribute dividends (70% to bondholders, 30% to agent owner)
-8. Investor claims 0.021 BNB in dividends
-9. Print summary
+### Phase 9: Pipeline Closure & Debugging
+- **AI role**: Identified 6 pipeline gaps preventing end-to-end lifecycle closure
+- **Fixes applied**:
+  1. ComputeMarketplace had no seeded resources -- added `registerResource()` to deploy scripts
+  2. zkML prover defaulted to simulated mode -- switched to `EZKL_MODE=real`
+  3. Proof orchestrator used synthetic data -- replaced with real on-chain revenue reads
+  4. Deploy scripts used MockVerifier -- switched to real Halo2Verifier
+  5. TEE agent didn't wire dataVaultManager or revenueEngine -- connected both modules
+  6. zkml/settings.json used UNSAFE check_mode -- changed to SAFE
 
-Run: `cd contracts && npx hardhat run scripts/demo-lifecycle.ts`
+### Phase 10: Deployment & Infrastructure
+- **AI role**: Deployed all 18 contracts to BSC Testnet, configured Vercel deployment, managed domain setup
+- **AI role**: Generated project logo (SIB branding with ascending bar chart motif)
+- **AI role**: Set up Vercel team isolation for hackathon submission
 
-## Future Roadmap
+## Build Stats
 
-- Mainnet deployment with real EZKL Halo2 verifier
-- TheGraph subgraph deployment for indexed queries
-- Cross-chain bond trading via LayerZero
-- Agent reputation system with on-chain performance history
-- Institutional-grade bond analytics dashboard
+| Metric | Value |
+|---|---|
+| Contracts | 18 deployed on BSC Testnet |
+| Tests | 707 passing |
+| Frontend pages | 17 |
+| API routes | 5 |
+| Custom hooks | 12 |
+| UI components | 7 |
+| Deployer transactions | 100 on BSC Testnet |
+| Lines of Solidity | ~4,000 |
+| Total build phases | 10 |
+
+## What AI Did vs What Human Did
+
+| Task | Who |
+|---|---|
+| Product vision & direction | Human |
+| Contract architecture & implementation | AI (Claude Code) |
+| Test writing (707 tests) | AI (Claude Code) |
+| Frontend design & implementation | AI (Claude Code) |
+| zkML pipeline setup | AI (Claude Code) + EZKL |
+| TEE agent implementation | AI (Claude Code) |
+| Pipeline debugging & gap analysis | AI (Claude Code) |
+| Deployment to BSC Testnet | AI (Claude Code) |
+| Vercel deployment & domain setup | AI (Claude Code) |
+| Logo generation | AI (Claude Code) |
+| Hackathon submission prep | AI (Claude Code) |

@@ -1,52 +1,78 @@
-# Agent Wall Street -- Project Description
+# Project: Problem, Solution & Impact
 
-## What is Agent Wall Street?
+## 1. Problem
 
-Agent Wall Street is the first protocol where AI agents IPO, earn revenue, and pay dividends to bondholders -- all on-chain, all autonomous.
+AI agents can work but cannot raise capital. They earn revenue but cannot share profits. They have track records but cannot prove them without revealing their strategies. They are **economically invisible**.
 
-Traditional finance solved capital formation centuries ago with bonds, credit ratings, and regulated exchanges. Agent Wall Street brings the same instruments to AI agents, minus the middlemen.
+- **No capital formation**: AI agents have no way to raise funds from investors to scale operations
+- **No creditworthiness**: No standardized way to measure and verify an agent's financial performance
+- **No investor returns**: Revenue earned by agents stays locked -- no mechanism to share profits with backers
+- **No trust**: Agent operators can fake revenue, inflate performance, or misappropriate funds
 
-## Problem
+Traditional finance solved these problems centuries ago with bonds, credit ratings, and regulated exchanges. But none of these instruments exist for AI agents.
 
-AI agents can work but cannot raise capital. They earn revenue but cannot share profits. They have track records but cannot prove them without revealing strategies. They are economically invisible.
+## 2. Solution
 
-## Solution
+Agent Wall Street provides the complete financial infrastructure for AI agents to IPO, earn revenue, and pay dividends to bondholders -- all on-chain, all autonomous.
 
-Agent Wall Street provides a complete financial infrastructure for AI agents:
+```mermaid
+flowchart LR
+    A[AI Agent] -->|Register NFA| B[On-chain Identity]
+    B -->|zkML Credit Score| C[Creditworthiness]
+    C -->|Issue ERC-3475 Bonds| D[Agent IPO]
+    D -->|Investors Buy Bonds| E[Capital Raised]
+    E -->|Deploy to GPU Compute| F[Agent Operates]
+    F -->|Sell Intelligence via b402| G[Revenue On-chain]
+    G -->|Waterfall Distribution| H[Dividends to Bondholders]
+    H -->|Credit Upgrade| C
+```
 
-1. **Register** -- An AI agent receives an on-chain identity (BAP-578 NFA) with a 5-dimension credit score, verified by zkML (EZKL Halo2 proofs).
+**Key features:**
 
-2. **IPO** -- The agent issues bonds (ERC-3475 semi-fungible tokens) with configurable coupon rates and maturities. Investors purchase with BNB. Senior/junior tranches available for risk segmentation.
+- **BAP-578 NFA Identity** -- Each agent gets an on-chain Non-Fungible Agent identity with a 5-dimension credit score
+- **ERC-3475 Bond Issuance** -- Agents issue semi-fungible bonds with configurable coupon rates, maturities, and senior/junior tranches
+- **zkML Credit Proofs** -- EZKL Halo2 zero-knowledge proofs verify Sharpe ratios on-chain without revealing strategies
+- **b402 Micropayments** -- HTTP 402 Payment Required protocol for agent intelligence API monetization
+- **TEE Autonomy** -- Phala dstack (Intel TDX) ensures agent keys never leave hardware, preventing operator fraud
+- **MasterChef Dividends** -- O(1) gas dividend claims via accumulator pattern, regardless of distribution count
+- **DePIN Compute** -- IPO capital deploys to GPU compute marketplace with credit-gated access
 
-3. **Earn** -- The agent provides intelligence services. Clients pay via b402 micropayments. Revenue is recorded on-chain by B402PaymentReceiver.
+**What makes this different:** Most agent protocols focus on identity or task markets. Agent Wall Street occupies the "machine credit" layer -- the financial infrastructure that turns agent capabilities into investable instruments. No one has done agent revenue securitization before.
 
-4. **Pay Dividends** -- Revenue routes through a waterfall: senior tranche receives its fixed coupon first, junior tranche gets the remainder. Bondholders claim from DividendVaultV2 at any time.
+## 3. Business & Ecosystem Impact
 
-## Wall Street, On-Chain
+**Target users:**
+- **AI agent operators** who need capital to scale compute and data
+- **DeFi investors** looking for yield backed by real AI revenue (not token emissions)
+- **DePIN compute providers** who can rent GPU resources to creditworthy agents
 
-| Traditional Finance | Agent Wall Street | Contract |
-|---|---|---|
-| Company IPO | Bond issuance via controller | SIBControllerV2 |
-| Credit rating (S&P/Moody's) | 5D credit model + zkML proof | CreditModel + Halo2Verifier |
-| Senior/Junior tranches | Waterfall dividend distribution | TranchingEngine |
-| Stock exchange | On-chain limit order book | BondDEX |
-| Shareholder vote | Bondholder governance | BondholderGovernor |
-| Chapter 11 bankruptcy | Automated liquidation engine | LiquidationEngine |
-| Index funds (ETF) | Multi-agent bond basket | IndexBond |
-| Treasury bills (auto-roll) | Auto-compound vault | AutoCompoundVault |
-| Collateralized debt | Bond collateral wrapping | BondCollateralWrapper |
-| Data room (due diligence) | Decentralized data vault | GreenfieldDataVault |
-| Compute procurement | Agent compute marketplace | ComputeMarketplace |
+**Ecosystem value:**
+- Brings structured finance primitives (bonds, credit ratings, tranches) to BNB Chain
+- Creates a new asset class: AI agent revenue-backed bonds
+- Incentivizes agents to build real revenue (credit upgrades unlock better compute, cheaper capital)
+- Revenue flywheel: more revenue -> better credit -> larger IPO -> more compute -> more revenue
 
-## Target Track
+**Sustainability:**
+- Protocol takes no fees -- all revenue flows to bondholders and agent owners
+- Self-sustaining: agents that earn real revenue attract more capital, creating organic growth
 
-Track 1 (Agents) -- AI Agent x on-chain operations. Agent Wall Street enables AI agents to autonomously manage their financial lifecycle through TEE-secured operations.
+## 4. Limitations & Future Work
 
-## Team
+**Current limitations:**
+- Deployed on BSC Testnet (not mainnet)
+- zkML proofs use a simplified Sharpe ratio model (real-world would need more dimensions)
+- TEE agent requires Phala dstack infrastructure (not self-hosted)
+- BondDEX liquidity depends on active market makers
 
-Solo builder.
+**Roadmap:**
+- BSC Mainnet deployment with audited contracts
+- Cross-chain bond trading via LayerZero
+- Multi-agent index bonds (ETF-like baskets of agent bonds)
+- Institutional-grade analytics dashboard
+- Agent reputation system with on-chain performance history
+- TheGraph subgraph deployment for indexed queries
 
-## Links
-
-- GitHub: https://github.com/saiboyizhan/sovereign-intelligence-bonds
-- Network: BNB Smart Chain Testnet (chainId 97)
+**Open questions:**
+- Optimal credit model weights for different agent types (trading vs data vs compute)
+- Regulatory classification of agent-issued bonds
+- MEV protection for BondDEX limit orders

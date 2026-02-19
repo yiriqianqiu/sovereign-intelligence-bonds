@@ -1,145 +1,251 @@
-# Agent Wall Street -- Technical Architecture
+# Technical: Architecture, Setup & Demo
 
-## System Architecture
+## 1. Architecture
 
+### System Overview
+
+Agent Wall Street is a full-stack protocol with 5 layers: smart contracts, zkML proofs, TEE agent, prover service, and frontend.
+
+```mermaid
+flowchart TB
+    subgraph Frontend ["Frontend (Next.js 14)"]
+        UI[17 Pages + wagmi v2 + RainbowKit]
+    end
+    subgraph TEE ["TEE Agent (Phala dstack)"]
+        Agent[Express + viem + Intel TDX]
+    end
+    subgraph Prover ["Prover Service"]
+        EZKL[FastAPI + Celery + Redis + EZKL]
+    end
+    subgraph Chain ["BSC Testnet (18 Contracts)"]
+        Controller[SIBControllerV2]
+        NFA[NFARegistry]
+        Bond[SIBBondManager ERC-3475]
+        Dividend[DividendVaultV2]
+        B402[B402PaymentReceiver]
+        Verifier[Halo2Verifier]
+        Tranche[TranchingEngine]
+        DEX[BondDEX]
+        Compute[ComputeMarketplace]
+    end
+    UI --> Controller
+    UI --> Bond
+    UI --> DEX
+    Agent --> Controller
+    Agent --> B402
+    Agent --> NFA
+    Agent --> Compute
+    EZKL --> Verifier
+    Controller --> NFA
+    Controller --> Bond
+    Controller --> Dividend
+    Controller --> Tranche
+    B402 --> Controller
 ```
-Investor                          AI Agent (TEE)
-   |                                   |
-   | buy bonds (BNB)                   | sell intelligence (b402)
-   v                                   v
-SIBControllerV2  <----------->  B402PaymentReceiver
-   |                                   |
-   | manage issuance                   | record revenue
-   v                                   v
-SIBBondManager (ERC-3475)         revenuePool
-   |                                   |
-   | mint / burn / transfer            | distributeDividends()
-   v                                   v
-TranchingEngine               DividendVaultV2
-   |                                   |
-   | senior-first waterfall            | MasterChef accumulator
-   v                                   v
-BondDEX (secondary market)    Bondholder claims BNB
-   |
-   +---> BondholderGovernor (on-chain voting)
-   +---> LiquidationEngine (under-collateralized positions)
-   +---> IndexBond (multi-agent baskets)
-   +---> AutoCompoundVault (auto-roll maturing bonds)
 
-zkML Layer:
-  CreditModel (5D scoring) --> Halo2Verifier (EZKL on-chain)
+### Data Flow
 
-TEE Layer:
-  Phala dstack (Intel TDX) --> attestation + autonomous operations
+```mermaid
+sequenceDiagram
+    participant I as Investor
+    participant F as Frontend
+    participant C as SIBControllerV2
+    participant B as SIBBondManager
+    participant A as AI Agent (TEE)
+    participant P as B402PaymentReceiver
+    participant D as DividendVaultV2
 
-Data Layer:
-  GreenfieldDataVault --> encrypted agent performance data
+    Note over A: Phase 1: Register
+    A->>C: registerAgent (NFA identity)
+    A->>C: submitSharpeProof (zkML)
+
+    Note over A: Phase 2: IPO
+    A->>C: initiateIPO (bonds)
+    I->>F: Buy bonds (BNB)
+    F->>C: purchaseBondsBNB
+    C->>B: mint ERC-3475 bonds
+
+    Note over A: Phase 3: Earn
+    A->>P: payBNB (b402 revenue)
+    P->>C: forward revenue
+
+    Note over A: Phase 4: Dividends
+    A->>C: distributeDividends
+    C->>D: deposit (waterfall)
+    I->>D: claim BNB
 ```
 
-## Tech Stack
+### On-chain vs Off-chain
 
-| Layer | Technology | Details |
+| Component | On-chain | Off-chain |
 |---|---|---|
-| Smart Contracts | Hardhat 3 + Solidity 0.8.28 + OpenZeppelin 5.4 | 18 production contracts, 707 tests |
-| zkML | EZKL framework (Halo2 proving system) | Verifiable Sharpe ratio proofs on-chain |
-| TEE Agent | Phala dstack (Intel TDX) + Express + viem | Autonomous agent with remote attestation |
-| Frontend | Next.js 14 + wagmi v2 + RainbowKit + Tailwind CSS | 17 pages, 5 API routes, 12 hooks |
-| Prover | FastAPI + Celery + Redis | Real EZKL proof generation pipeline (Docker Compose) |
-| Subgraph | TheGraph (AssemblyScript) | 13 data sources, 20 entity types |
-| Network | BNB Smart Chain Testnet | chainId 97 |
+| Agent identity (NFA) | NFARegistry | - |
+| Bond issuance/trading | SIBBondManager + BondDEX | - |
+| Credit scoring | CreditModel contract | zkML proof generation (EZKL) |
+| Revenue recording | B402PaymentReceiver | Intelligence API serving |
+| Dividend distribution | DividendVaultV2 | - |
+| TEE attestation | TEERegistry | Intel TDX remote attestation |
+| Compute rental | ComputeMarketplace | GPU workload execution |
+| Data storage | GreenfieldDataVault (hash) | Encrypted data on Greenfield |
 
-## Smart Contracts (18 deployed)
+### Security
 
-| Contract | Address | Purpose |
-|---|---|---|
-| NFARegistry | 0x802E67532B974ece533702311a66fEE000c1C325 | Agent identity + credit scoring |
-| SIBControllerV2 | 0xF71C0a2fFEB12AE11fcbB97fbe3edc5Ea8273F7f | Core controller (IPO/dividends/proof/TEE) |
-| SIBBondManager | 0xb3EDaBF3334C37b926b99bAE6D23c8126099baB8 | ERC-3475 bond mint/transfer/redeem |
-| DividendVaultV2 | 0x66efb45Cd439CF3a216Df8682FFbebDc554729f1 | MasterChef dividend accumulator |
-| TranchingEngine | 0xf70901dA7D9FCDE6aAAF38CcE56D353fA37E0595 | Senior/junior waterfall |
-| B402PaymentReceiver | 0x7248Ff93f64B4D0e49914016A91fbF7289dab90e | b402 micropayment receiver (EIP-712 + gasless) |
-| Halo2Verifier | 0xad46573cEFE98dDcDB99e8c521fc094331B75f9d | EZKL Halo2 on-chain verifier |
-| BondDEX | 0xB881e50fD22020a1774CAC535f00A77493350271 | Limit order book |
-| BondholderGovernor | 0xdAe3DBC6e07d2C028D04aeCfe60084f4816b8135 | On-chain governance |
-| LiquidationEngine | 0xB0a1f8055bb7C276007ccc8E193719375D5b0418 | Automated liquidation |
-| AutoCompoundVault | 0xbD1506A35aD79f076cd035a8312448E50718ad13 | Auto-roll maturing bonds |
-| IndexBond | 0x4ACDd6F2a9dB84ca5455529eC7F24b4BcC174F1f | Multi-agent bond baskets |
-| BondCollateralWrapper | 0xaA1D9058A9970a8C00abF768eff21e2c0B86Cf7B | Bond collateral wrapping |
-| GreenfieldDataVault | 0x862CaFca80f90eB7d83dDb5d21a6dbb1FcFc172B | Decentralized data vault |
-| ComputeMarketplace | 0xe279cF8E564c170EF89C7E63600d16CFd37d9D99 | Agent compute marketplace |
-| TokenRegistry | 0xC5824Ce1cbfFC4A13C2C31191606407de100eB65 | Token whitelist + pricing |
-| TEERegistry | 0x437c8314DCCa0eA3B5F66195B5311CEC6d494690 | TEE delegation + attestation |
-| MockUSDT | 0x74c4Ff55455c72A4a768e1DcFf733A0F676AfFD3 | Test stablecoin |
+- **TEE isolation**: Agent keys derived in Intel TDX hardware -- operator cannot extract or forge signatures
+- **Relay restriction**: B402PaymentReceiver supports optional relay whitelist to prevent fake revenue injection
+- **zkML privacy**: Halo2 proofs verify Sharpe ratios without revealing raw performance data
+- **MasterChef accumulator**: O(1) gas claims prevent DoS via excessive distributions
+- **Reentrancy guards**: All value-transferring functions use OpenZeppelin ReentrancyGuard
+- **Attestation freshness**: TEERegistry marks agents inactive if attestation > 24h old
 
-## Credit Model (zkML)
+## 2. Setup & Run
 
-5-dimension weighted scoring, verified on-chain via EZKL Halo2 proofs:
+### Prerequisites
 
-| Dimension | Weight | Measures |
-|---|---|---|
-| Sharpe Ratio | 35% | Risk-adjusted returns |
-| Stability | 25% | Revenue consistency |
-| Frequency | 15% | Transaction regularity |
-| Age | 10% | Operational maturity |
-| Revenue | 15% | Cumulative earnings |
+- **Node.js** >= 18 (tested with 25.x)
+- **npm** >= 9
+- **Docker & Docker Compose** (for prover service only)
+- **MetaMask** or any Web3 wallet (BSC Testnet)
+- **tBNB** from [BNB Testnet Faucet](https://www.bnbchain.org/en/testnet-faucet)
 
-Score ranges: AAA (8000+), AA (6000-7999), A (4000-5999), B (2000-3999), C (0-1999).
-
-## Revenue Flow (b402)
-
-```
-Client calls Agent intelligence API
-  --> HTTP 402 Payment Required
-  --> Client pays via b402 (BNB)
-  --> B402PaymentReceiver records payment on-chain
-  --> Revenue forwarded to SIBControllerV2 revenuePool
-  --> distributeDividends() triggers waterfall
-  --> TranchingEngine: senior tranche gets fixed coupon first
-  --> TranchingEngine: junior tranche receives remainder
-  --> DividendVaultV2 accumulates per-bond dividends (O(1) gas)
-  --> Bondholders claim BNB at any time
-```
-
-## TEE Integration
-
-The TEE (Trusted Execution Environment) layer uses Phala dstack with Intel TDX to provide hardware-level trust:
-
-- **TEERegistry**: On-chain record of authorized TEE wallets + attestation hashes
-- **Delegation**: Agent owners authorize TEE wallets to act on their behalf (submitSharpeProof, distributeDividends, initiateIPO, markBondsRedeemable)
-- **Attestation**: TEE pushes TDX remote attestation quote hashes every 12 hours
-- **Revenue relay**: TEE agent forwards b402 payments with authorized relay restriction
-- **Autonomy**: Background schedulers for attestation (12h) and dividend distribution (6h)
-
-## Project Structure
-
-```
-sovereign-intelligence-bonds/
-  contracts/           Hardhat 3, 18 Solidity contracts, 707 tests
-  src/                 Next.js 14 frontend (17 pages, 12 hooks, 7 components)
-    app/               Page routes + 5 API endpoints
-    components/        UI components (radar charts, order books, gauges)
-    hooks/             Contract interaction hooks (wagmi v2)
-    lib/               ABIs, addresses, utilities
-  tee-agent/           Phala dstack TEE agent (Express + viem)
-  prover-service/      FastAPI + Celery + Redis (Docker Compose)
-  zkml/                PyTorch Sharpe model + EZKL proof pipeline
-  subgraph/            TheGraph indexer (13 data sources, 20 entities)
-  docs/                Project documentation
-  bsc.address          Deployed contract addresses
-```
-
-## Build & Run
+### Install & Build
 
 ```bash
+# Clone the repository
+git clone https://github.com/yiriqianqiu/sovereign-intelligence-bonds.git
+cd sovereign-intelligence-bonds
+
 # Frontend
-npm install && npm run dev
+npm install
+npm run build
 
 # Contracts
-cd contracts && npm install && npx hardhat test
+cd contracts && npm install && cd ..
 
 # TEE Agent
-cd tee-agent && npm install && npm run dev
-
-# Prover
-cd prover-service && docker-compose up
+cd tee-agent && npm install && cd ..
 ```
+
+### Run
+
+**1. Frontend** (port 3000):
+```bash
+npm run dev
+# Open http://localhost:3000
+```
+
+**2. Contracts -- run tests**:
+```bash
+cd contracts
+npx hardhat test     # 707 tests
+```
+
+**3. Contracts -- full lifecycle demo** (local Hardhat node):
+```bash
+cd contracts
+npx hardhat run scripts/demo-lifecycle.ts
+```
+
+**4. TEE Agent** (port 3100):
+```bash
+cd tee-agent
+cp .env.example .env  # configure settings
+npm run dev
+```
+
+**5. Prover Service** (port 8000):
+```bash
+cd prover-service
+docker-compose up
+```
+
+**6. Deploy to BSC Testnet**:
+```bash
+cd contracts
+PRIVATE_KEY=0x... npx hardhat run scripts/deploy-v2.ts --network bscTestnet
+```
+
+### Verify
+
+- Frontend: open http://localhost:3000, connect MetaMask to BSC Testnet
+- Contracts: `npx hardhat test` should show 707 passing tests
+- Demo lifecycle: should print 10 steps with all transactions succeeding
+- TEE Agent: `curl http://localhost:3100/health` returns OK
+- Prover: `curl http://localhost:8000/health` returns OK
+
+## 3. Demo Guide
+
+### Access
+
+- **Live demo**: [sib-protocol.vercel.app](https://sib-protocol.vercel.app)
+- **Local**: `npm run dev` -> http://localhost:3000
+- **Network**: BSC Testnet (chainId 97)
+
+### User Flow
+
+```mermaid
+journey
+    title Agent Wall Street User Journey
+    section Explore
+      Browse agents: 5: Investor
+      View credit scores: 5: Investor
+    section Invest
+      Connect wallet: 5: Investor
+      Buy agent bonds: 5: Investor
+    section Earn
+      Agent earns revenue: 5: Agent
+      Dividends accumulate: 5: Protocol
+    section Claim
+      View claimable: 5: Investor
+      Claim dividends: 5: Investor
+```
+
+### Key Actions to Try
+
+1. **Connect Wallet** -- Click "Connect Wallet", select MetaMask, switch to BSC Testnet
+2. **Browse Agents** -- Navigate to Agents page, view registered AI agents and their credit scores
+3. **View Agent Detail** -- Click an agent to see 5D credit radar chart, revenue history, bond info
+4. **Buy Bonds** -- On agent page, enter bond quantity, click "Purchase Bonds" (pays BNB)
+5. **Check Portfolio** -- Navigate to Portfolio page, view your bond holdings and claimable dividends
+6. **Claim Dividends** -- Click "Claim" to withdraw accumulated BNB dividends
+7. **Trade on BondDEX** -- Place limit orders on the secondary bond market
+8. **View Governance** -- Check bondholder proposals and vote
+
+### Expected Outcomes
+
+| Action | Expected Result |
+|---|---|
+| Connect wallet | BSC Testnet connected, address shown |
+| Buy bonds | BNB deducted, bond balance increases |
+| Agent earns revenue | Revenue shown on agent dashboard |
+| Claim dividends | BNB transferred to wallet |
+| Place limit order | Order appears in BondDEX order book |
+
+### Troubleshooting
+
+| Issue | Fix |
+|---|---|
+| Wrong network | Switch MetaMask to BSC Testnet (chainId 97) |
+| No tBNB | Get from [faucet](https://www.bnbchain.org/en/testnet-faucet) |
+| Transaction fails | Check gas, ensure sufficient tBNB balance |
+| Page not loading | Clear cache, reconnect wallet |
+
+### Full Lifecycle Demo (Contracts Only)
+
+For a complete automated demo without frontend:
+
+```bash
+cd contracts
+npx hardhat run scripts/demo-lifecycle.ts
+```
+
+This runs 10 steps in sequence:
+1. Deploy all 18 contracts
+2. Wire permissions
+3. Register AI Agent "AlphaSignal-01"
+4. Agent IPO: issue 100 bonds (5% coupon, 365-day maturity)
+5. Investor buys 10 bonds (0.1 BNB)
+6. Release IPO capital + rent NVIDIA A100 GPU
+7. Agent earns 0.03 BNB (3 b402 intelligence payments)
+8. Distribute dividends (70% to bondholders, 30% to agent owner)
+9. Investor claims 0.021 BNB in dividends
+10. Print summary (revenue, capital, evolution level)

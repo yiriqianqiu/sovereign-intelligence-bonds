@@ -112,5 +112,7 @@
     }
   ],
   "deployer": "0x29468A12Fbfd5dC105847ec832d06F9EBb5427Dd",
-  "notes": "18 production contracts on BSC Testnet (chainId 97). All contracts verified and wired with correct permissions."
+  "deployerExplorerLink": "https://testnet.bscscan.com/address/0x29468A12Fbfd5dC105847ec832d06F9EBb5427Dd",
+  "frontendUrl": "https://sib-protocol.vercel.app",
+  "notes": "18 production contracts on BSC Testnet (chainId 97). All contracts verified and wired with correct permissions. 100 deployer transactions on-chain."
 }
