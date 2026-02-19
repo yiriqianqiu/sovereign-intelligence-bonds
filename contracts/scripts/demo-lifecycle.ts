@@ -7,10 +7,11 @@
  *   3. Register an AI agent (NFA)
  *   4. Agent IPO (issue bonds)
  *   5. Investor buys bonds
- *   6. Agent earns b402 revenue (intelligence payments)
- *   7. Distribute dividends to bondholders
- *   8. Investor claims dividends
- *   9. Print summary
+ *   6. Release IPO capital + rent GPU compute
+ *   7. Agent earns b402 revenue (intelligence payments)
+ *   8. Distribute dividends to bondholders
+ *   9. Investor claims dividends
+ *  10. Print summary
  *
  * Usage:
  *   npx hardhat run scripts/demo-lifecycle.ts
@@ -31,12 +32,12 @@ async function main() {
   // ============================================================
   // Step 1: Deploy all contracts locally
   // ============================================================
-  console.log("[1/9] Deploying contracts...");
+  console.log("[1/10] Deploying contracts...");
 
-  const mockVerifier = await (await ethers.getContractFactory("MockVerifier")).deploy();
-  await mockVerifier.waitForDeployment();
-  const mockVerifierAddr = await mockVerifier.getAddress();
-  console.log("  MockVerifier:      " + mockVerifierAddr);
+  const halo2Verifier = await (await ethers.getContractFactory("Halo2Verifier")).deploy();
+  await halo2Verifier.waitForDeployment();
+  const halo2VerifierAddr = await halo2Verifier.getAddress();
+  console.log("  Halo2Verifier:     " + halo2VerifierAddr);
 
   const tokenRegistry = await (await ethers.getContractFactory("TokenRegistry")).deploy(deployer.address);
   await tokenRegistry.waitForDeployment();
@@ -62,7 +63,7 @@ async function main() {
     nfaRegistryAddr,
     bondManagerAddr,
     dividendVaultAddr,
-    mockVerifierAddr,
+    halo2VerifierAddr,
     tokenRegistryAddr
   );
   await controller.waitForDeployment();
@@ -74,12 +75,25 @@ async function main() {
   const b402Addr = await b402.getAddress();
   console.log("  B402Payment:     " + b402Addr);
 
+  const teeRegistryContract = await (await ethers.getContractFactory("TEERegistry")).deploy(nfaRegistryAddr);
+  await teeRegistryContract.waitForDeployment();
+  const teeRegistryAddr = await teeRegistryContract.getAddress();
+  console.log("  TEERegistry:       " + teeRegistryAddr);
+
+  const computeMarketplace = await (await ethers.getContractFactory("ComputeMarketplace")).deploy(
+    nfaRegistryAddr,
+    tokenRegistryAddr
+  );
+  await computeMarketplace.waitForDeployment();
+  const computeMarketplaceAddr = await computeMarketplace.getAddress();
+  console.log("  ComputeMarketplace:" + computeMarketplaceAddr);
+
   console.log();
 
   // ============================================================
   // Step 2: Wire permissions
   // ============================================================
-  console.log("[2/9] Wiring permissions...");
+  console.log("[2/10] Wiring permissions...");
 
   await (await nfaRegistry.setController(controllerAddr)).wait();
   console.log("  NFARegistry.setController       -> done");
@@ -99,12 +113,25 @@ async function main() {
   await (await b402.setController(controllerAddr)).wait();
   console.log("  B402Payment.setController       -> done");
 
+  await (await controller.setTEERegistry(teeRegistryAddr)).wait();
+  console.log("  Controller.setTEERegistry        -> done");
+
+  await (await computeMarketplace.setTEERegistry(teeRegistryAddr)).wait();
+  console.log("  ComputeMarketplace.setTEERegistry -> done");
+
+  // Seed initial GPU resource
+  await (await computeMarketplace.registerResource(
+    "NVIDIA-A100-80GB", "80GB HBM2e, 312 TFLOPS",
+    1, ethers.parseEther("0.001"), ethers.ZeroAddress, 0, 0, 10
+  )).wait();
+  console.log("  ComputeMarketplace.registerResource -> GPU #1 seeded");
+
   console.log();
 
   // ============================================================
   // Step 3: Register AI Agent
   // ============================================================
-  console.log('[3/9] Registering AI Agent "AlphaSignal-01"...');
+  console.log('[3/10] Registering AI Agent "AlphaSignal-01"...');
 
   const registerTx = await nfaRegistry.registerAgent(
     "AlphaSignal-01",
@@ -126,7 +153,7 @@ async function main() {
   // ============================================================
   // Step 4: Agent IPO -- issue bonds
   // ============================================================
-  console.log("[4/9] Agent IPO: issuing bonds...");
+  console.log("[4/10] Agent IPO: issuing bonds...");
 
   const couponRateBps = 500n;        // 5% annual coupon
   const maturityPeriod = 86400n * 365n; // 1 year
@@ -165,7 +192,7 @@ async function main() {
   // ============================================================
   // Step 5: Investor buys bonds
   // ============================================================
-  console.log("[5/9] Investor buying 10 bonds...");
+  console.log("[5/10] Investor buying 10 bonds...");
 
   const bondsToBuy = 10n;
   const totalCost = pricePerBond * bondsToBuy; // 0.1 BNB
@@ -185,9 +212,36 @@ async function main() {
   console.log();
 
   // ============================================================
-  // Step 6: Agent earns b402 revenue (intelligence payments)
+  // Step 6: Release IPO Capital + Rent GPU Compute
   // ============================================================
-  console.log("[6/9] Agent earning revenue (b402 intelligence payments)...");
+  console.log("[6/10] Deploying capital to GPU compute...");
+
+  const ipoCapital = await controller.ipoCapital(agentId, ethers.ZeroAddress);
+  console.log("  IPO capital available: " + ethers.formatEther(ipoCapital) + " BNB");
+
+  // Release capital from Controller to deployer (acting as TEE wallet)
+  const rentCost = ethers.parseEther("0.024"); // 1 unit * 24 hours * 0.001 BNB/hr
+  const releaseTx = await controller.releaseIPOCapital(agentId, ethers.ZeroAddress, rentCost);
+  await releaseTx.wait();
+  console.log("  Released " + ethers.formatEther(rentCost) + " BNB from Controller");
+
+  // Rent GPU compute
+  const resourceId = 1n;
+  const rentTx = await computeMarketplace.rentComputeBNB(agentId, resourceId, 1n, 24n, {
+    value: rentCost,
+  });
+  await rentTx.wait();
+
+  const activeRentals = await computeMarketplace.getActiveRentalCount(agentId);
+  console.log("  Rented: NVIDIA-A100-80GB, 1 unit, 24 hours");
+  console.log("  Active rentals: " + activeRentals.toString());
+  console.log("  Capital -> Compute -> Ready to earn revenue");
+  console.log();
+
+  // ============================================================
+  // Step 7: Agent earns b402 revenue (intelligence payments)
+  // ============================================================
+  console.log("[7/10] Agent earning revenue (b402 intelligence payments)...");
 
   const paymentAmount = ethers.parseEther("0.01");
   const endpoints = [
@@ -215,9 +269,9 @@ async function main() {
   console.log();
 
   // ============================================================
-  // Step 7: Distribute dividends
+  // Step 8: Distribute dividends
   // ============================================================
-  console.log("[7/9] Distributing dividends to bondholders...");
+  console.log("[8/10] Distributing dividends to bondholders...");
 
   const distTx = await controller.distributeDividends(classId, nonceId);
   await distTx.wait();
@@ -226,9 +280,9 @@ async function main() {
   console.log();
 
   // ============================================================
-  // Step 8: Investor claims dividends
+  // Step 9: Investor claims dividends
   // ============================================================
-  console.log("[8/9] Investor claiming dividends...");
+  console.log("[9/10] Investor claiming dividends...");
 
   const claimableBefore = await dividendVault.claimable(investor.address, classId, nonceId, ethers.ZeroAddress);
   console.log("  Claimable:     " + ethers.formatEther(claimableBefore) + " BNB");
@@ -247,7 +301,7 @@ async function main() {
   console.log();
 
   // ============================================================
-  // Step 9: Print summary
+  // Step 10: Print summary
   // ============================================================
   const revenueProfile = await nfaRegistry.getRevenueProfile(agentId);
   const agentMeta = await nfaRegistry.getAgentMetadata(agentId);

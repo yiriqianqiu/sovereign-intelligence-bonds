@@ -37,6 +37,8 @@ export const NFARegistryABI = [
   "function getAgentMetadata(uint256 agentId) view returns (string name, string description, string modelHash, string endpoint, uint256 registeredAt)",
   "function creditRatings(uint256 agentId) view returns (uint8)",
   "function totalSupply() view returns (uint256)",
+  "function getMonthlyRevenue(uint256 agentId) view returns (uint256[12])",
+  "function getRevenueProfile(uint256 agentId) view returns (uint256 totalEarned, uint256 totalPayments, uint256 lastPaymentTime, uint256 sharpeRatio, bytes32 sharpeProofHash)",
 ] as const;
 
 export const GreenfieldDataVaultABI = [

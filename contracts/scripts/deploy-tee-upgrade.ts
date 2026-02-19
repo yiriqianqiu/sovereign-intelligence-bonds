@@ -104,6 +104,23 @@ async function main() {
   console.log("  ComputeMarketplace:", computeAddr);
 
   // ============================================================
+  // Seed initial compute resource
+  // ============================================================
+  console.log("\nSeeding ComputeMarketplace with initial GPU resource...");
+  const seedTx = await compute.registerResource(
+    "NVIDIA-A100-80GB",       // name
+    "80GB HBM2e, 312 TFLOPS", // specs
+    1,                         // GPU type
+    ethers.parseEther("0.001"), // 0.001 BNB/hour
+    ethers.ZeroAddress,        // BNB payment
+    0,                         // no credit gate
+    0,                         // no evolution gate
+    10                         // 10 units capacity
+  );
+  await seedTx.wait();
+  console.log("  Registered resource #1: NVIDIA-A100-80GB (0.001 BNB/hr, 10 units)");
+
+  // ============================================================
   // Rewire: Set controllers and TEE registries
   // ============================================================
   console.log("\n--- Rewiring permissions ---");

@@ -5,7 +5,7 @@
  *   PRIVATE_KEY=0x... npx hardhat run scripts/deploy-v2.ts --network bscTestnet
  *
  * Deploy order (17 contracts + wiring):
- *   1.  MockVerifier
+ *   1.  Halo2Verifier (real EZKL SharpeVerifier)
  *   2.  TokenRegistry
  *   3.  NFARegistry
  *   4.  SIBBondManager
@@ -46,13 +46,13 @@ async function main() {
   );
   console.log("---");
 
-  // 1. MockVerifier
-  console.log("[1/15] Deploying MockVerifier...");
-  const MockVerifier = await ethers.getContractFactory("MockVerifier");
-  const verifier = await MockVerifier.deploy();
+  // 1. Halo2Verifier (real EZKL SharpeVerifier)
+  console.log("[1/15] Deploying Halo2Verifier (real EZKL SharpeVerifier)...");
+  const Halo2Verifier = await ethers.getContractFactory("Halo2Verifier");
+  const verifier = await Halo2Verifier.deploy();
   await verifier.waitForDeployment();
   const verifierAddr = await verifier.getAddress();
-  console.log("  MockVerifier:", verifierAddr);
+  console.log("  Halo2Verifier:", verifierAddr);
 
   // 2. TokenRegistry
   console.log("[2/15] Deploying TokenRegistry...");
@@ -218,6 +218,21 @@ async function main() {
   const mockUsdcAddr = await mockUsdc.getAddress();
   console.log("  MockUSDC:", mockUsdcAddr);
 
+  // ========== Seed initial compute resource ==========
+  console.log("\nSeeding ComputeMarketplace with initial GPU resource...");
+  const seedTx = await computeMarketplace.registerResource(
+    "NVIDIA-A100-80GB",       // name
+    "80GB HBM2e, 312 TFLOPS", // specs
+    1,                         // GPU type
+    ethers.parseEther("0.001"), // 0.001 BNB/hour
+    ethers.ZeroAddress,        // BNB payment
+    0,                         // no credit gate (any agent can rent)
+    0,                         // no evolution gate
+    10                         // 10 units capacity
+  );
+  await seedTx.wait();
+  console.log("  Registered resource #1: NVIDIA-A100-80GB (0.001 BNB/hr, 10 units)");
+
   // ========== Post-deploy wiring ==========
   console.log("\nWiring permissions (10 calls)...");
 
@@ -294,7 +309,7 @@ async function main() {
 
   // ========== Summary ==========
   const addresses: Record<string, string | number> = {
-    MockVerifier: verifierAddr,
+    Halo2Verifier: verifierAddr,
     TokenRegistry: tokenRegistryAddr,
     NFARegistry: registryAddr,
     SIBBondManager: bondManagerAddr,

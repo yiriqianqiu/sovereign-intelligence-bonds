@@ -8,6 +8,8 @@ import { requestProof } from "./proofOrchestrator.js";
 import { startAttestationScheduler, stopAttestationScheduler } from "./attestation.js";
 import { startDividendScheduler, stopDividendScheduler } from "./dividendScheduler.js";
 import { deployCapitalToCompute } from "./computeManager.js";
+import { registerDataAsset } from "./dataVaultManager.js";
+import { forwardBNBPayment } from "./revenueEngine.js";
 
 // Routes
 import healthRouter from "./routes/health.js";
@@ -66,6 +68,23 @@ async function main() {
     console.log(`[phase-1] Agent #${agentId} already registered, skipping\n`);
   }
 
+  // Register agent model data on Greenfield Data Vault
+  try {
+    const { keccak256, toHex } = await import("viem");
+    const contentHash = keccak256(toHex(config.agentModelHash));
+    await registerDataAsset(
+      agentId,
+      "sib-agent-models",
+      `${config.agentName}-model`,
+      contentHash,
+      0, // dataType: 0 = model
+      1024n,
+    );
+    console.log(`[phase-1] Model data registered on Greenfield Data Vault\n`);
+  } catch {
+    console.log(`[phase-1] Greenfield data vault registration skipped (not available)\n`);
+  }
+
   // Start attestation scheduler (continuous, every 12h)
   startAttestationScheduler();
 
@@ -115,6 +134,25 @@ async function main() {
   console.log("[phase-3] HTTP API server starting...");
   console.log("[phase-3] All revenue will be TEE-signed (payBNBVerified)");
   console.log("[phase-3] Developer CANNOT forge revenue -- key in hardware\n");
+
+  // Revenue forwarding endpoint -- allows programmatic b402 payments
+  app.post("/api/revenue/forward", async (req, res) => {
+    try {
+      const { amountBnb, endpoint } = req.body as { amountBnb?: string; endpoint?: string };
+      if (!amountBnb || !endpoint) {
+        res.status(400).json({ error: "Missing amountBnb or endpoint" });
+        return;
+      }
+      const txHash = await forwardBNBPayment({
+        agentId,
+        amountBnb,
+        endpoint,
+      });
+      res.json({ txHash, agentId, amountBnb, endpoint });
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : "Unknown error" });
+    }
+  });
 
   // === Phase 4: Return Period -- Auto Dividends ===
   console.log("--- Phase 4: Return Period ---");

@@ -2,8 +2,8 @@
 SIB Prover Worker: Celery task for async EZKL proof generation.
 
 Supports two modes via EZKL_MODE env var:
-  - "real"      : Full EZKL pipeline (requires ezkl + model artifacts)
-  - "simulated" : Fast mock proof for development/demo (default)
+  - "real"      : Full EZKL pipeline (requires ezkl + model artifacts) (default)
+  - "simulated" : Fast mock proof for development/demo
 
 Model artifacts are expected in MODEL_DIR (default: /app/model):
   - sharpe_model.onnx, settings.json, circuit.ezkl
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 CELERY_BROKER = os.getenv("CELERY_BROKER", "redis://localhost:6379/0")
 CELERY_BACKEND = os.getenv("CELERY_BACKEND", "redis://localhost:6379/1")
-EZKL_MODE = os.getenv("EZKL_MODE", "simulated")
+EZKL_MODE = os.getenv("EZKL_MODE", "real")
 MODEL_DIR = os.getenv("MODEL_DIR", os.path.join(os.path.dirname(__file__), "..", "zkml"))
 
 celery_app = Celery("sib-prover", broker=CELERY_BROKER, backend=CELERY_BACKEND)
