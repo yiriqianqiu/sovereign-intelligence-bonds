@@ -44,21 +44,21 @@ export default function DashboardPage() {
 
   const { data: agentMetadata } = useReadContract({
     address: ADDRESSES.NFARegistry as `0x${string}`,
-    abi: NFARegistryABI,
+    abi: parseAbi(NFARegistryABI),
     functionName: "getAgentMetadata",
     args: [BigInt(ALPHA_SIGNAL_ID)],
   });
 
   const { data: agentState } = useReadContract({
     address: ADDRESSES.NFARegistry as `0x${string}`,
-    abi: NFARegistryABI,
+    abi: parseAbi(NFARegistryABI),
     functionName: "getAgentState",
     args: [BigInt(ALPHA_SIGNAL_ID)],
   });
 
   const { data: agentRating } = useReadContract({
     address: ADDRESSES.NFARegistry as `0x${string}`,
-    abi: NFARegistryABI,
+    abi: parseAbi(NFARegistryABI),
     functionName: "creditRatings",
     args: [BigInt(ALPHA_SIGNAL_ID)],
   });
@@ -89,7 +89,7 @@ export default function DashboardPage() {
         try {
           const classIds = await client.readContract({
             address: ADDRESSES.SIBBondManager as `0x${string}`,
-            abi: SIBBondManagerV2ABI,
+            abi: parseAbi(SIBBondManagerV2ABI),
             functionName: "getAgentClassIds",
             args: [BigInt(ALPHA_SIGNAL_ID)],
           }) as bigint[];
@@ -100,7 +100,7 @@ export default function DashboardPage() {
             try {
               const nonceData = await client.readContract({
                 address: ADDRESSES.SIBBondManager as `0x${string}`,
-                abi: SIBBondManagerV2ABI,
+                abi: parseAbi(SIBBondManagerV2ABI),
                 functionName: "bondNonces",
                 args: [cid, BigInt(0)],
               });
@@ -111,7 +111,7 @@ export default function DashboardPage() {
             try {
               const deposited = await client.readContract({
                 address: ADDRESSES.DividendVaultV2 as `0x${string}`,
-                abi: DividendVaultV2ABI,
+                abi: parseAbi(DividendVaultV2ABI),
                 functionName: "totalDeposited",
                 args: [cid, BigInt(0), BNB_TOKEN],
               });

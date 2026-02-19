@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { createPublicClient, http, formatEther } from "viem";
+import { createPublicClient, http, formatEther, parseAbi } from "viem";
 import { bscTestnet } from "viem/chains";
 import { NFARegistryV2ABI, SIBControllerV2ABI } from "@/lib/contracts";
 import { ADDRESSES } from "@/lib/contract-addresses";
@@ -157,31 +157,31 @@ export async function GET(request: Request) {
     const [metadata, state, rating, revenue, balance] = await Promise.all([
       client.readContract({
         address: ADDRESSES.NFARegistry as `0x${string}`,
-        abi: NFARegistryV2ABI,
+        abi: parseAbi(NFARegistryV2ABI),
         functionName: "getAgentMetadata",
         args: [agentId],
       }),
       client.readContract({
         address: ADDRESSES.NFARegistry as `0x${string}`,
-        abi: NFARegistryV2ABI,
+        abi: parseAbi(NFARegistryV2ABI),
         functionName: "getAgentState",
         args: [agentId],
       }),
       client.readContract({
         address: ADDRESSES.NFARegistry as `0x${string}`,
-        abi: NFARegistryV2ABI,
+        abi: parseAbi(NFARegistryV2ABI),
         functionName: "creditRatings",
         args: [agentId],
       }),
       client.readContract({
         address: ADDRESSES.NFARegistry as `0x${string}`,
-        abi: NFARegistryV2ABI,
+        abi: parseAbi(NFARegistryV2ABI),
         functionName: "getRevenueProfile",
         args: [agentId],
       }),
       client.readContract({
         address: ADDRESSES.NFARegistry as `0x${string}`,
-        abi: NFARegistryV2ABI,
+        abi: parseAbi(NFARegistryV2ABI),
         functionName: "getAgentBalance",
         args: [agentId],
       }),
@@ -209,7 +209,7 @@ export async function GET(request: Request) {
     try {
       hasIPO = (await client.readContract({
         address: ADDRESSES.SIBControllerV2 as `0x${string}`,
-        abi: SIBControllerV2ABI,
+        abi: parseAbi(SIBControllerV2ABI),
         functionName: "hasIPO",
         args: [agentId],
       })) as boolean;
@@ -217,7 +217,7 @@ export async function GET(request: Request) {
       if (hasIPO) {
         const classIds = (await client.readContract({
           address: ADDRESSES.SIBControllerV2 as `0x${string}`,
-          abi: SIBControllerV2ABI,
+          abi: parseAbi(SIBControllerV2ABI),
           functionName: "getAgentBondClasses",
           args: [agentId],
         })) as bigint[];

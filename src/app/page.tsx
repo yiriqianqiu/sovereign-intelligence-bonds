@@ -77,7 +77,7 @@ export default function Home() {
         try {
           const classIds = await client.readContract({
             address: ADDRESSES.SIBBondManager as `0x${string}`,
-            abi: SIBBondManagerV2ABI,
+            abi: parseAbi(SIBBondManagerV2ABI),
             functionName: "getAgentClassIds",
             args: [BigInt(ALPHA_SIGNAL_ID)],
           }) as bigint[];
@@ -86,7 +86,7 @@ export default function Home() {
             try {
               const nonceData = await client.readContract({
                 address: ADDRESSES.SIBBondManager as `0x${string}`,
-                abi: SIBBondManagerV2ABI,
+                abi: parseAbi(SIBBondManagerV2ABI),
                 functionName: "bondNonces",
                 args: [cid, BigInt(0)],
               });
@@ -98,7 +98,7 @@ export default function Home() {
             try {
               const deposited = await client.readContract({
                 address: ADDRESSES.DividendVaultV2 as `0x${string}`,
-                abi: DividendVaultV2ABI,
+                abi: parseAbi(DividendVaultV2ABI),
                 functionName: "totalDeposited",
                 args: [cid, BigInt(0), BNB_TOKEN],
               });

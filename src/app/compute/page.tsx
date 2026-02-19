@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
-import { createPublicClient, http, formatEther } from "viem";
+import { createPublicClient, http, formatEther, parseAbi } from "viem";
 import { bscTestnet } from "viem/chains";
 import { ComputeMarketplaceABI } from "@/lib/contracts";
 import { ADDRESSES } from "@/lib/contract-addresses";
@@ -40,7 +40,7 @@ export default function ComputePage() {
           try {
             const data = await client.readContract({
               address: ADDRESSES.ComputeMarketplace as `0x${string}`,
-              abi: ComputeMarketplaceABI,
+              abi: parseAbi(ComputeMarketplaceABI),
               functionName: "resources",
               args: [BigInt(i)],
             }) as readonly [

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, parseAbi } from "viem";
 import { bscTestnet } from "viem/chains";
 import { NFARegistryABI, GreenfieldDataVaultABI } from "@/lib/contracts";
 import { ADDRESSES } from "@/lib/contract-addresses";
@@ -34,7 +34,7 @@ export default function DataVaultPage() {
       try {
         const totalSupply = await client.readContract({
           address: ADDRESSES.NFARegistry as `0x${string}`,
-          abi: NFARegistryABI,
+          abi: parseAbi(NFARegistryABI),
           functionName: "totalSupply",
         });
 
@@ -44,7 +44,7 @@ export default function DataVaultPage() {
         for (let i = 0; i < Math.min(count, 20); i++) {
           const tokenId = await client.readContract({
             address: ADDRESSES.NFARegistry as `0x${string}`,
-            abi: NFARegistryABI,
+            abi: parseAbi(NFARegistryABI),
             functionName: "tokenByIndex",
             args: [BigInt(i)],
           });
@@ -56,7 +56,7 @@ export default function DataVaultPage() {
           try {
             const metadata = await client.readContract({
               address: ADDRESSES.NFARegistry as `0x${string}`,
-              abi: NFARegistryABI,
+              abi: parseAbi(NFARegistryABI),
               functionName: "getAgentMetadata",
               args: [tokenId as bigint],
             });
@@ -68,7 +68,7 @@ export default function DataVaultPage() {
           try {
             const assetIds = await client.readContract({
               address: ADDRESSES.GreenfieldDataVault as `0x${string}`,
-              abi: GreenfieldDataVaultABI,
+              abi: parseAbi(GreenfieldDataVaultABI),
               functionName: "getAgentAssets",
               args: [tokenId as bigint],
             }) as bigint[];
@@ -77,7 +77,7 @@ export default function DataVaultPage() {
               try {
                 const asset = await client.readContract({
                   address: ADDRESSES.GreenfieldDataVault as `0x${string}`,
-                  abi: GreenfieldDataVaultABI,
+                  abi: parseAbi(GreenfieldDataVaultABI),
                   functionName: "getDataAsset",
                   args: [aid],
                 }) as readonly [bigint, string, string, `0x${string}`, number, bigint, bigint, boolean, boolean];

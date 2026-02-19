@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useReadContract, useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { formatEther } from "viem";
+import { formatEther, parseAbi } from "viem";
 import { createPublicClient, http } from "viem";
 import { bscTestnet } from "viem/chains";
 import { SIBBondManagerV2ABI, SIBControllerV2ABI, DividendVaultV2ABI, NFARegistryABI } from "@/lib/contracts";
@@ -46,7 +46,7 @@ export default function BondDetailPage() {
   // Read bond class data (v2: 8 fields)
   const { data: bondClassData, isLoading: classLoading, isError: classError } = useReadContract({
     address: ADDRESSES.SIBBondManager as `0x${string}`,
-    abi: SIBBondManagerV2ABI,
+    abi: parseAbi(SIBBondManagerV2ABI),
     functionName: "bondClasses",
     args: [classIdBigInt],
   });
@@ -61,7 +61,7 @@ export default function BondDetailPage() {
   // Read dynamic coupon from v2 controller
   const { data: dynamicCouponData } = useReadContract({
     address: ADDRESSES.SIBControllerV2 as `0x${string}`,
-    abi: SIBControllerV2ABI,
+    abi: parseAbi(SIBControllerV2ABI),
     functionName: "calculateDynamicCoupon",
     args: [classIdBigInt],
     query: { enabled: !!bcTuple },
@@ -70,7 +70,7 @@ export default function BondDetailPage() {
   // Read revenue pool for the agent (v2 with token param)
   const { data: revenuePoolData } = useReadContract({
     address: ADDRESSES.SIBControllerV2 as `0x${string}`,
-    abi: SIBControllerV2ABI,
+    abi: parseAbi(SIBControllerV2ABI),
     functionName: "revenuePool",
     args: agentId !== undefined ? [agentId, BNB_TOKEN] : undefined,
     query: { enabled: agentId !== undefined },
@@ -79,7 +79,7 @@ export default function BondDetailPage() {
   // Read dividend accumulator (v2 with token param)
   const { data: accDividendData } = useReadContract({
     address: ADDRESSES.DividendVaultV2 as `0x${string}`,
-    abi: DividendVaultV2ABI,
+    abi: parseAbi(DividendVaultV2ABI),
     functionName: "accDividendPerBond",
     args: [classIdBigInt, BigInt(0), BNB_TOKEN],
   });
@@ -87,7 +87,7 @@ export default function BondDetailPage() {
   // Read total dividends deposited (v2 with token param)
   const { data: totalDepositedData } = useReadContract({
     address: ADDRESSES.DividendVaultV2 as `0x${string}`,
-    abi: DividendVaultV2ABI,
+    abi: parseAbi(DividendVaultV2ABI),
     functionName: "totalDeposited",
     args: [classIdBigInt, BigInt(0), BNB_TOKEN],
   });
@@ -95,7 +95,7 @@ export default function BondDetailPage() {
   // Read next nonce ID to know how many nonces exist
   const { data: nextNonceIdData } = useReadContract({
     address: ADDRESSES.SIBBondManager as `0x${string}`,
-    abi: SIBBondManagerV2ABI,
+    abi: parseAbi(SIBBondManagerV2ABI),
     functionName: "nextNonceId",
     args: [classIdBigInt],
   });
@@ -118,7 +118,7 @@ export default function BondDetailPage() {
         for (let i = 0; i < nonceCount; i++) {
           const nonceData = await client.readContract({
             address: ADDRESSES.SIBBondManager as `0x${string}`,
-            abi: SIBBondManagerV2ABI,
+            abi: parseAbi(SIBBondManagerV2ABI),
             functionName: "bondNonces",
             args: [classIdBigInt, BigInt(i)],
           });
@@ -144,7 +144,7 @@ export default function BondDetailPage() {
         try {
           const metadata = await client.readContract({
             address: ADDRESSES.NFARegistry as `0x${string}`,
-            abi: NFARegistryABI,
+            abi: parseAbi(NFARegistryABI),
             functionName: "getAgentMetadata",
             args: [bcAgentId],
           });
@@ -424,7 +424,7 @@ export default function BondDetailPage() {
                 onClick={() =>
                   distribute({
                     address: ADDRESSES.SIBControllerV2 as `0x${string}`,
-                    abi: SIBControllerV2ABI,
+                    abi: parseAbi(SIBControllerV2ABI),
                     functionName: "distributeDividends",
                     args: [classIdBigInt, BigInt(activeNonce.nonceId)],
                   })

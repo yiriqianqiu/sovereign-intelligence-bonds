@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useReadContract } from "wagmi";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, parseAbi } from "viem";
 import { bscTestnet } from "viem/chains";
 import { formatEther } from "viem";
 import { NFARegistryABI, SIBBondManagerV2ABI } from "@/lib/contracts";
@@ -39,7 +39,7 @@ export default function BondsPage() {
 
   const { data: totalSupply } = useReadContract({
     address: ADDRESSES.NFARegistry as `0x${string}`,
-    abi: NFARegistryABI,
+    abi: parseAbi(NFARegistryABI),
     functionName: "totalSupply",
   });
 
@@ -61,7 +61,7 @@ export default function BondsPage() {
         for (let i = 0; i < count; i++) {
           const agentId = await client.readContract({
             address: ADDRESSES.NFARegistry as `0x${string}`,
-            abi: NFARegistryABI,
+            abi: parseAbi(NFARegistryABI),
             functionName: "tokenByIndex",
             args: [BigInt(i)],
           });
@@ -71,7 +71,7 @@ export default function BondsPage() {
           try {
             classIds = await client.readContract({
               address: ADDRESSES.SIBBondManager as `0x${string}`,
-              abi: SIBBondManagerV2ABI,
+              abi: parseAbi(SIBBondManagerV2ABI),
               functionName: "getAgentClassIds",
               args: [agentId as bigint],
             }) as bigint[];
@@ -86,7 +86,7 @@ export default function BondsPage() {
           try {
             const metadata = await client.readContract({
               address: ADDRESSES.NFARegistry as `0x${string}`,
-              abi: NFARegistryABI,
+              abi: parseAbi(NFARegistryABI),
               functionName: "getAgentMetadata",
               args: [agentId as bigint],
             });
@@ -101,7 +101,7 @@ export default function BondsPage() {
             try {
               const bondClass = await client.readContract({
                 address: ADDRESSES.SIBBondManager as `0x${string}`,
-                abi: SIBBondManagerV2ABI,
+                abi: parseAbi(SIBBondManagerV2ABI),
                 functionName: "bondClasses",
                 args: [classId],
               });
@@ -117,7 +117,7 @@ export default function BondsPage() {
               try {
                 const nonceData = await client.readContract({
                   address: ADDRESSES.SIBBondManager as `0x${string}`,
-                  abi: SIBBondManagerV2ABI,
+                  abi: parseAbi(SIBBondManagerV2ABI),
                   functionName: "bondNonces",
                   args: [classId, BigInt(0)],
                 });

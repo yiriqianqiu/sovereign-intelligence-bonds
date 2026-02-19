@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
-import { formatEther } from "viem";
+import { formatEther, parseAbi } from "viem";
 import { createPublicClient, http } from "viem";
 import { bscTestnet } from "viem/chains";
 import { NFARegistryABI, SIBControllerV2ABI, SIBBondManagerV2ABI, DividendVaultV2ABI } from "@/lib/contracts";
@@ -38,7 +38,7 @@ export default function PortfolioPage() {
   // Get total agent count
   const { data: totalSupply } = useReadContract({
     address: ADDRESSES.NFARegistry as `0x${string}`,
-    abi: NFARegistryABI,
+    abi: parseAbi(NFARegistryABI),
     functionName: "totalSupply",
   });
 
@@ -63,14 +63,14 @@ export default function PortfolioPage() {
         for (let i = 0; i < count; i++) {
           const agentId = await client.readContract({
             address: ADDRESSES.NFARegistry as `0x${string}`,
-            abi: NFARegistryABI,
+            abi: parseAbi(NFARegistryABI),
             functionName: "tokenByIndex",
             args: [BigInt(i)],
           });
 
           const hasIPO = await client.readContract({
             address: ADDRESSES.SIBControllerV2 as `0x${string}`,
-            abi: SIBControllerV2ABI,
+            abi: parseAbi(SIBControllerV2ABI),
             functionName: "hasIPO",
             args: [agentId],
           });
@@ -80,7 +80,7 @@ export default function PortfolioPage() {
           // v2: get all bond class IDs for this agent
           const classIds = await client.readContract({
             address: ADDRESSES.SIBControllerV2 as `0x${string}`,
-            abi: SIBControllerV2ABI,
+            abi: parseAbi(SIBControllerV2ABI),
             functionName: "getAgentBondClasses",
             args: [agentId],
           }) as bigint[];
@@ -92,7 +92,7 @@ export default function PortfolioPage() {
           try {
             const metadata = await client.readContract({
               address: ADDRESSES.NFARegistry as `0x${string}`,
-              abi: NFARegistryABI,
+              abi: parseAbi(NFARegistryABI),
               functionName: "getAgentMetadata",
               args: [agentId],
             });
@@ -108,7 +108,7 @@ export default function PortfolioPage() {
             // Read bond class info (v1 ABI: 6 values; d[1]=couponRateBps)
             const bondClass = await client.readContract({
               address: ADDRESSES.SIBBondManager as `0x${string}`,
-              abi: SIBBondManagerV2ABI,
+              abi: parseAbi(SIBBondManagerV2ABI),
               functionName: "bondClasses",
               args: [classIdBig],
             });
@@ -117,7 +117,7 @@ export default function PortfolioPage() {
             // Get number of nonces
             const nextNonce = await client.readContract({
               address: ADDRESSES.SIBBondManager as `0x${string}`,
-              abi: SIBBondManagerV2ABI,
+              abi: parseAbi(SIBBondManagerV2ABI),
               functionName: "nextNonceId",
               args: [classIdBig],
             });
@@ -127,7 +127,7 @@ export default function PortfolioPage() {
             for (let n = 0; n < nonceCount; n++) {
               const balance = await client.readContract({
                 address: ADDRESSES.SIBBondManager as `0x${string}`,
-                abi: SIBBondManagerV2ABI,
+                abi: parseAbi(SIBBondManagerV2ABI),
                 functionName: "balanceOf",
                 args: [userAddress as `0x${string}`, classIdBig, BigInt(n)],
               });
@@ -137,7 +137,7 @@ export default function PortfolioPage() {
               // Read nonce data
               const nonceData = await client.readContract({
                 address: ADDRESSES.SIBBondManager as `0x${string}`,
-                abi: SIBBondManagerV2ABI,
+                abi: parseAbi(SIBBondManagerV2ABI),
                 functionName: "bondNonces",
                 args: [classIdBig, BigInt(n)],
               });
@@ -146,7 +146,7 @@ export default function PortfolioPage() {
               // Read claimable dividends
               const claimable = await client.readContract({
                 address: ADDRESSES.DividendVaultV2 as `0x${string}`,
-                abi: DividendVaultV2ABI,
+                abi: parseAbi(DividendVaultV2ABI),
                 functionName: "claimable",
                 args: [userAddress as `0x${string}`, classIdBig, BigInt(n), "0x0000000000000000000000000000000000000000" as `0x${string}`],
               });
@@ -190,7 +190,7 @@ export default function PortfolioPage() {
       setActiveAction(key);
       writeRedeem({
         address: ADDRESSES.SIBControllerV2 as `0x${string}`,
-        abi: SIBControllerV2ABI,
+        abi: parseAbi(SIBControllerV2ABI),
         functionName: "redeemBonds",
         args: [BigInt(classId), BigInt(nonceId), BigInt(amount)],
       });

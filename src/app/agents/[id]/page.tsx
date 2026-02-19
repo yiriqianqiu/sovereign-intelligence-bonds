@@ -8,7 +8,7 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
-import { formatEther, parseEther } from "viem";
+import { formatEther, parseEther, parseAbi } from "viem";
 import { createPublicClient, http } from "viem";
 import { bscTestnet } from "viem/chains";
 import {
@@ -318,7 +318,7 @@ export default function AgentDetailPage() {
     if (!fundAmount || Number(fundAmount) <= 0) return;
     writeFund({
       address: ADDRESSES.NFARegistry as `0x${string}`,
-      abi: NFARegistryABI,
+      abi: parseAbi(NFARegistryABI),
       functionName: "fundAgent",
       args: [agentId],
       value: parseEther(fundAmount),
@@ -358,7 +358,7 @@ export default function AgentDetailPage() {
     setCreditReport(null);
     writePayment({
       address: ADDRESSES.B402PaymentReceiver as `0x${string}`,
-      abi: B402PaymentReceiverABI,
+      abi: parseAbi(B402PaymentReceiverABI),
       functionName: "payBNB",
       args: [agentId, `/api/credit-report?agentId=${targetId}`],
       value: parseEther("0.001"),
@@ -378,7 +378,7 @@ export default function AgentDetailPage() {
   function handleDistributeDividends(classId: bigint, nonceId: bigint) {
     writeDistribute({
       address: ADDRESSES.SIBControllerV2 as `0x${string}`,
-      abi: SIBControllerV2ABI,
+      abi: parseAbi(SIBControllerV2ABI),
       functionName: "distributeDividends",
       args: [classId, nonceId],
     });
@@ -392,37 +392,37 @@ export default function AgentDetailPage() {
           await Promise.all([
             viemClient.readContract({
               address: ADDRESSES.NFARegistry as `0x${string}`,
-              abi: NFARegistryABI,
+              abi: parseAbi(NFARegistryABI),
               functionName: "getAgentMetadata",
               args: [agentId],
             }),
             viemClient.readContract({
               address: ADDRESSES.NFARegistry as `0x${string}`,
-              abi: NFARegistryABI,
+              abi: parseAbi(NFARegistryABI),
               functionName: "getAgentState",
               args: [agentId],
             }),
             viemClient.readContract({
               address: ADDRESSES.NFARegistry as `0x${string}`,
-              abi: NFARegistryABI,
+              abi: parseAbi(NFARegistryABI),
               functionName: "creditRatings",
               args: [agentId],
             }),
             viemClient.readContract({
               address: ADDRESSES.NFARegistry as `0x${string}`,
-              abi: NFARegistryABI,
+              abi: parseAbi(NFARegistryABI),
               functionName: "getRevenueProfile",
               args: [agentId],
             }),
             viemClient.readContract({
               address: ADDRESSES.NFARegistry as `0x${string}`,
-              abi: NFARegistryABI,
+              abi: parseAbi(NFARegistryABI),
               functionName: "getAgentOwner",
               args: [agentId],
             }),
             viemClient.readContract({
               address: ADDRESSES.NFARegistry as `0x${string}`,
-              abi: NFARegistryABI,
+              abi: parseAbi(NFARegistryABI),
               functionName: "getAgentBalance",
               args: [agentId],
             }),
@@ -433,7 +433,7 @@ export default function AgentDetailPage() {
         try {
           classIds = await viemClient.readContract({
             address: ADDRESSES.SIBBondManager as `0x${string}`,
-            abi: SIBBondManagerV2ABI,
+            abi: parseAbi(SIBBondManagerV2ABI),
             functionName: "getAgentClassIds",
             args: [agentId],
           }) as bigint[];
@@ -470,7 +470,7 @@ export default function AgentDetailPage() {
             try {
               const classData = await viemClient.readContract({
                 address: ADDRESSES.SIBBondManager as `0x${string}`,
-                abi: SIBBondManagerV2ABI,
+                abi: parseAbi(SIBBondManagerV2ABI),
                 functionName: "bondClasses",
                 args: [cid],
               });
@@ -483,14 +483,14 @@ export default function AgentDetailPage() {
               try {
                 const activeNonce = await viemClient.readContract({
                   address: ADDRESSES.SIBControllerV2 as `0x${string}`,
-                  abi: SIBControllerV2ABI,
+                  abi: parseAbi(SIBControllerV2ABI),
                   functionName: "activeNonce",
                   args: [cid],
                 });
 
                 const nonceData = await viemClient.readContract({
                   address: ADDRESSES.SIBBondManager as `0x${string}`,
-                  abi: SIBBondManagerV2ABI,
+                  abi: parseAbi(SIBBondManagerV2ABI),
                   functionName: "bondNonces",
                   args: [cid, activeNonce as bigint],
                 });
@@ -526,7 +526,7 @@ export default function AgentDetailPage() {
             try {
               const deposited = await viemClient.readContract({
                 address: ADDRESSES.DividendVaultV2 as `0x${string}`,
-                abi: DividendVaultV2ABI,
+                abi: parseAbi(DividendVaultV2ABI),
                 functionName: "totalDeposited",
                 args: [fc.classId, 0n, BNB_TOKEN],
               }) as bigint;
@@ -543,7 +543,7 @@ export default function AgentDetailPage() {
           const { ComputeMarketplaceABI } = await import("@/lib/contracts");
           const count = await viemClient.readContract({
             address: ADDRESSES.ComputeMarketplace as `0x${string}`,
-            abi: ComputeMarketplaceABI,
+            abi: parseAbi(ComputeMarketplaceABI),
             functionName: "getActiveRentalCount",
             args: [agentId],
           }) as bigint;
@@ -571,7 +571,7 @@ export default function AgentDetailPage() {
 
     writeIPO({
       address: ADDRESSES.SIBControllerV2 as `0x${string}`,
-      abi: SIBControllerV2ABI,
+      abi: parseAbi(SIBControllerV2ABI),
       functionName: "initiateIPO",
       args: [agentId, couponBps, maturitySeconds, price, supply, payToken],
     });
@@ -580,7 +580,7 @@ export default function AgentDetailPage() {
   function handleActivate() {
     writeActivate({
       address: ADDRESSES.NFARegistry as `0x${string}`,
-      abi: NFARegistryABI,
+      abi: parseAbi(NFARegistryABI),
       functionName: "updateState",
       args: [agentId, 1],
     });
@@ -977,7 +977,7 @@ export default function AgentDetailPage() {
                   try {
                     nonceId = await viemClient.readContract({
                       address: ADDRESSES.SIBControllerV2 as `0x${string}`,
-                      abi: SIBControllerV2ABI,
+                      abi: parseAbi(SIBControllerV2ABI),
                       functionName: "activeNonce",
                       args: [bc.classId],
                     }) as bigint;
