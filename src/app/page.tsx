@@ -262,7 +262,7 @@ export default function Home() {
             Invest in AlphaSignal
           </Link>
           <Link
-            href="/agents/1"
+            href={`/agents/${ALPHA_SIGNAL_ID}`}
             className="cursor-pointer rounded border border-border px-5 py-2 text-xs font-semibold text-foreground transition-colors duration-150 hover:border-gold/40 hover:text-gold"
           >
             View Agent Details
