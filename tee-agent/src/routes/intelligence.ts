@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { generatePreviewReport, generateFullReport } from "../intelligenceService.js";
-import { forwardBNBPayment } from "../revenueEngine.js";
+import { submitVerifiedRevenue } from "../receiptSigner.js";
 
 const router = Router();
 
@@ -47,14 +47,16 @@ router.post("/api/intelligence/:agentId", async (req: Request, res: Response) =>
       return;
     }
 
-    // Process payment via b402
+    // Process payment via TEE-verified b402 (payBNBVerified)
+    // TEE signs a receipt proving this revenue is from real API execution
     let txHash: string;
     try {
-      txHash = await forwardBNBPayment({
-        agentId,
-        amountBnb,
-        endpoint: "/api/intelligence",
-      });
+      const result = await submitVerifiedRevenue(agentId, amountBnb, "/api/intelligence");
+      if (!result) {
+        throw new Error("TEE receipt generation failed");
+      }
+      txHash = result.txHash;
+      console.log("[intelligence] TEE-verified payment confirmed:", txHash);
     } catch (paymentError) {
       console.error("[intelligence] Payment failed:", paymentError);
       res.status(402).json({
@@ -65,11 +67,12 @@ router.post("/api/intelligence/:agentId", async (req: Request, res: Response) =>
       return;
     }
 
-    // Generate full report after successful payment
+    // Generate full report after successful verified payment
     const report = await generateFullReport(agentId);
 
     res.json({
       paymentTxHash: txHash,
+      teeVerified: true,
       report,
     });
   } catch (error) {

@@ -80,16 +80,22 @@ export const X402PaymentReceiverABI = [
 
 export const B402PaymentReceiverABI = [
   "function payBNB(uint256 agentId, string endpoint) payable",
+  "function payBNBVerified(uint256 agentId, string endpoint, uint256 timestamp, bytes32 logicHash, bytes teeSignature) payable",
   "function payERC20(uint256 agentId, address token, uint256 amount, string endpoint)",
   "function payWithSignature(address payer, uint256 agentId, address token, uint256 amount, string endpoint, uint256 deadline, bytes signature)",
+  "function verifyTEEReceipt(uint256 agentId, uint256 amount, string endpoint, uint256 timestamp, bytes32 logicHash, bytes teeSignature) view returns (bool valid, address signer)",
   "function getPaymentCount() view returns (uint256)",
   "function agentTotalPayments(uint256 agentId, address token) view returns (uint256)",
+  "function verifiedRevenue(uint256 agentId) view returns (uint256)",
+  "function totalVerifiedPayments() view returns (uint256)",
+  "function teeVerificationRequired() view returns (bool)",
   "function nonces(address payer) view returns (uint256)",
   "function DOMAIN_SEPARATOR() view returns (bytes32)",
   "function relayRestricted() view returns (bool)",
   "function authorizedRelays(address relay) view returns (bool)",
   "event PaymentReceived(address indexed payer, uint256 indexed agentId, address indexed token, string endpoint, uint256 amount)",
   "event SignedPaymentReceived(address indexed payer, uint256 indexed agentId, address indexed token, string endpoint, uint256 amount, address relayer)",
+  "event VerifiedPaymentReceived(uint256 indexed agentId, uint256 amount, bytes32 logicHash, address indexed teeWallet)",
 ] as const;
 
 // ============================================================

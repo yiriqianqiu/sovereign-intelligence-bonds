@@ -147,8 +147,21 @@ def _run_real_ezkl(self, job_id: str, returns: list[float]) -> dict:
         with open(proof_path, "r") as f:
             proof_data = json.load(f)
 
-        proof_hex = proof_data.get("proof", "")
-        instances = proof_data.get("instances", [[]])
+        # hex_proof is the 0x-prefixed hex string; "proof" is a byte array — use hex_proof
+        proof_hex = proof_data.get("hex_proof", "")
+        if not proof_hex:
+            # Fallback: convert byte array to hex if hex_proof missing
+            raw_bytes = proof_data.get("proof", [])
+            if isinstance(raw_bytes, list):
+                proof_hex = "0x" + bytes(raw_bytes).hex()
+            else:
+                proof_hex = str(raw_bytes)
+
+        # Use pretty_public_inputs.inputs[0] for big-endian 0x-prefixed uint256 values
+        # (raw instances[0] is little-endian, which would fail BN254 field check on-chain)
+        ppi = proof_data.get("pretty_public_inputs", {})
+        ppi_inputs = ppi.get("inputs", [[]])
+        instances = ppi_inputs[0] if ppi_inputs else []
 
     proving_time = time.time() - start_time
     sharpe = compute_sharpe(returns)
@@ -197,12 +210,18 @@ def _run_simulated(self, job_id: str, returns: list[float]) -> dict:
 
     sharpe = compute_sharpe(returns)
     proof_payload = json.dumps({"returns": returns[:10], "sharpe": sharpe, "ts": time.time()})
-    proof_hex = "0x" + hashlib.sha256(proof_payload.encode()).hexdigest()
+    # Generate simulated proof — long enough to look realistic (3072 bytes = 6144 hex chars)
+    proof_seed = hashlib.sha256(proof_payload.encode()).digest()
+    proof_hex = "0x" + (proof_seed * 96).hex()  # 32 * 96 = 3072 bytes
 
-    # Generate simulated instances (mimicking EZKL output format)
-    instances = [
-        ["0x" + hashlib.sha256(f"inst_{i}_{sharpe}".encode()).hexdigest()[:16] for i in range(4)]
-    ]
+    # Generate 31 simulated instances (matching real EZKL: 30 inputs + 1 output)
+    # Use BN254-valid field elements (< BN254_SCALAR_FIELD)
+    BN254_FIELD = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001
+    instances = []
+    for i in range(31):
+        h = hashlib.sha256(f"inst_{i}_{sharpe}_{time.time()}".encode()).digest()
+        val = int.from_bytes(h, "big") % BN254_FIELD
+        instances.append("0x" + val.to_bytes(32, "big").hex())
 
     proving_time = time.time() - start_time
 

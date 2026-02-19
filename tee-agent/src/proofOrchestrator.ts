@@ -11,11 +11,18 @@ interface ProveResponse {
   status: string;
 }
 
+interface ProofResult {
+  proof_hex: string;
+  instances: string[];
+  sharpe_ratio: number;
+  verified: boolean;
+  mode: string;
+}
+
 interface JobStatusResponse {
-  status: "pending" | "running" | "completed" | "failed";
-  proof_hex?: string;
-  instances?: string[];
-  error?: string;
+  status: "pending" | "processing" | "completed" | "failed";
+  result?: ProofResult;
+  message?: string;
 }
 
 const POLL_INTERVAL_MS = 5000;
@@ -26,9 +33,15 @@ export async function requestProof(agentId: number): Promise<string | null> {
     console.log(`${LOG_PREFIX} Requesting Sharpe proof for agent ${agentId}`);
 
     // Step 1: Submit proof request to prover-service
+    // Generate synthetic daily returns for Sharpe ratio proof
+    // In production, these would come from actual on-chain revenue data
+    const dailyReturns = Array.from({ length: 30 }, (_, i) =>
+      0.001 + Math.sin(i * 0.5) * 0.0005 + Math.random() * 0.0002
+    );
+
     const proveRes = await axios.post<ProveResponse>(
       `${config.proverServiceUrl}/prove`,
-      { agent_id: agentId }
+      { agent_id: String(agentId), returns: dailyReturns }
     );
 
     const jobId = proveRes.data.job_id;
@@ -44,13 +57,14 @@ export async function requestProof(agentId: number): Promise<string | null> {
         `${config.proverServiceUrl}/prove/${jobId}`
       );
 
-      const { status, proof_hex, instances, error } = statusRes.data;
+      const { status, result, message } = statusRes.data;
 
-      if (status === "completed" && proof_hex && instances) {
-        console.log(`${LOG_PREFIX} Proof ready (${instances.length} instances)`);
+      if (status === "completed" && result?.proof_hex && result?.instances) {
+        const { proof_hex, instances } = result;
+        console.log(`${LOG_PREFIX} Proof ready (${instances.length} instances, mode=${result.mode})`);
 
-        // Step 3: Parse instances (handle 0x prefix for BigInt)
-        const parsedInstances = instances.map((inst) => {
+        // Step 3: Parse instances — already big-endian 0x-prefixed uint256 hex from worker
+        const parsedInstances = instances.map((inst: string) => {
           const cleaned = inst.startsWith("0x") ? inst : `0x${inst}`;
           return BigInt(cleaned);
         });
@@ -74,7 +88,7 @@ export async function requestProof(agentId: number): Promise<string | null> {
       }
 
       if (status === "failed") {
-        console.error(`${LOG_PREFIX} Proof generation failed: ${error}`);
+        console.error(`${LOG_PREFIX} Proof generation failed: ${message}`);
         return null;
       }
 

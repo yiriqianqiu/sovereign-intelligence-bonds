@@ -7,11 +7,11 @@ export const TEERegistryABI = [
 
 export const SIBControllerV2ABI = [
   "function submitSharpeProof(uint256 agentId, bytes calldata proof, uint256[] calldata instances) external",
-  "function distributeDividends(uint256 agentId, uint256 classId, uint256 nonce) external payable",
+  "function distributeDividends(uint256 classId, uint256 nonceId) external",
   "function initiateIPO(uint256 agentId, uint256 couponRateBps, uint256 maturityPeriod, uint256 pricePerBond, uint256 maxSupply, address paymentToken) external",
-  "function markBondsRedeemable(uint256 agentId, uint256 classId, uint256 nonce) external",
+  "function markBondsRedeemable(uint256 classId, uint256 nonceId) external",
   "function revenuePool(uint256 agentId, address token) view returns (uint256)",
-  "function activeNonce(uint256 agentId, uint256 classId) view returns (uint256)",
+  "function activeNonce(uint256 classId) view returns (uint256)",
   "function getAgentBondClasses(uint256 agentId) view returns (uint256[])",
   "function hasIPO(uint256 agentId) view returns (bool)",
 ] as const;
@@ -33,7 +33,7 @@ export const NFARegistryABI = [
   "function getAgentOwner(uint256 agentId) view returns (address)",
   "function getAgentState(uint256 agentId) view returns (uint8)",
   "function getAgentMetadata(uint256 agentId) view returns (string name, string description, string modelHash, string endpoint, uint256 registeredAt)",
-  "function getCreditScore(uint256 agentId) view returns (uint256)",
+  "function creditRatings(uint256 agentId) view returns (uint8)",
   "function totalSupply() view returns (uint256)",
 ] as const;
 

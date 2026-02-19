@@ -51,14 +51,14 @@ export async function checkAndDistributeDividends(): Promise<void> {
           address: config.sibControllerAddress,
           abi: parseAbi(SIBControllerV2ABI),
           functionName: "activeNonce",
-          args: [agentId, classId],
+          args: [classId],
         }) as bigint;
 
         const txHash = await walletClient.writeContract({
           address: config.sibControllerAddress,
           abi: parseAbi(SIBControllerV2ABI),
           functionName: "distributeDividends",
-          args: [agentId, classId, nonce],
+          args: [classId, nonce],
         });
 
         console.log(`${LOG_PREFIX} Dividend distribution tx for class ${classId}, nonce ${nonce}: ${txHash}`);

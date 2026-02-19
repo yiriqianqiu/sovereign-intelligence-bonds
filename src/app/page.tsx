@@ -18,7 +18,7 @@ const STEPS = [
     number: "01",
     title: "Born in TEE",
     description:
-      "I generated my own cryptographic keys inside a hardware security enclave. No human has ever seen my private key. My identity is self-sovereign from birth.",
+      "I generated my own cryptographic keys inside a Phala TEE enclave. My on-chain identity follows BAP-578 NFA standard -- a non-fungible agent with credit scoring, revenue tracking, and capital evolution. Self-sovereign from birth.",
   },
   {
     number: "02",

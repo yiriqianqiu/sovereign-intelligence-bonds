@@ -70,9 +70,9 @@ export async function generatePreviewReport(agentId: number): Promise<Pick<Intel
       publicClient.readContract({
         address: config.nfaRegistryAddress,
         abi: parseAbi(NFARegistryABI),
-        functionName: "getCreditScore",
+        functionName: "creditRatings",
         args: [BigInt(agentId)],
-      }) as Promise<bigint>,
+      }) as Promise<number>,
     ]);
 
     name = metadata[0];
@@ -130,9 +130,9 @@ export async function generateFullReport(agentId: number): Promise<IntelligenceR
       publicClient.readContract({
         address: config.nfaRegistryAddress,
         abi: parseAbi(NFARegistryABI),
-        functionName: "getCreditScore",
+        functionName: "creditRatings",
         args: [bigAgentId],
-      }) as Promise<bigint>,
+      }) as Promise<number>,
       publicClient.readContract({
         address: config.nfaRegistryAddress,
         abi: parseAbi(NFARegistryABI),
