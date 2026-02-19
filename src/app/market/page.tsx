@@ -56,28 +56,28 @@ export default function MarketPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Bond Market</h1>
-        <p className="mt-1 text-sm text-[rgb(var(--muted-foreground))]">
+        <h1 className="font-heading text-xl font-bold tracking-tight">Bond Market</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
           Secondary market for ERC-3475 bond trading
         </p>
       </div>
 
       {/* Stats Row */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="card-glass rounded-xl p-4">
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Orders</p>
+        <div className="rounded border bg-card p-4">
+          <p className="label-mono">Total Orders</p>
           <p className="stat-value font-mono text-2xl text-gold">
             {countLoading ? "..." : (orderCount ?? 0)}
           </p>
         </div>
-        <div className="card-glass rounded-xl p-4">
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Active Orders</p>
+        <div className="rounded border bg-card p-4">
+          <p className="label-mono">Active Orders</p>
           <p className="stat-value font-mono text-2xl text-sage">
             {ordersLoading ? "..." : activeOrders.length}
           </p>
         </div>
-        <div className="card-glass rounded-xl p-4">
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Protocol Fee</p>
+        <div className="rounded border bg-card p-4">
+          <p className="label-mono">Protocol Fee</p>
           <p className="stat-value font-mono text-2xl">
             {feeLoading ? "..." : `${protocolFee ?? 0} bps`}
           </p>
@@ -90,10 +90,10 @@ export default function MarketPage() {
           <button
             key={tab}
             onClick={() => setFilter(tab)}
-            className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            className={`cursor-pointer rounded px-3 py-1.5 text-xs font-medium transition-colors ${
               filter === tab
-                ? "bg-[#D4A853]/15 text-gold"
-                : "bg-[rgb(var(--secondary))] text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--border))]"
+                ? "text-gold"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab === "all" ? "All" : tab === "sell" ? "Sell Orders" : "Buy Orders"}
@@ -111,7 +111,7 @@ export default function MarketPage() {
           No orders found.
         </div>
       ) : (
-        <div className="card-glass overflow-x-auto rounded-xl">
+        <div className="overflow-x-auto rounded border bg-card">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[rgb(var(--border))]">

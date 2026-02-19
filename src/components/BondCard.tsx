@@ -27,49 +27,51 @@ export default function BondCard({
   const couponPct = (couponRateBps / 100).toFixed(1);
   const fillPct = maxSupply > 0 ? (totalIssued / maxSupply) * 100 : 0;
   const priceDisplay = parseFloat(formatEther(pricePerBond));
-  const sharpeDisplay = (sharpeRatioAtIssue / 1000).toFixed(3);
+  const sharpeDisplay = (sharpeRatioAtIssue / 1e18).toFixed(3);
 
   return (
     <Link
       href={`/bonds/${classId}`}
-      className="card-glass cursor-pointer rounded-xl p-5 transition-colors duration-200"
+      className="cursor-pointer rounded border bg-card p-4 transition-colors duration-150 hover:border-gold/30"
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Class #{classId}</p>
-          <h3 className="mt-0.5 text-base font-semibold">{agentName}</h3>
+          <div className="flex items-baseline gap-2">
+            <span className="font-mono text-2xs text-muted-foreground">class:{classId}</span>
+            <h3 className="font-heading text-sm font-semibold">{agentName}</h3>
+          </div>
         </div>
-        <span className="rounded-md bg-[#D4A853]/10 px-2.5 py-1 text-xs font-bold text-gold">
-          {couponPct}% APY
+        <span className="font-mono text-xs font-medium text-gold">
+          {couponPct}%
         </span>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-3">
+      <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-3">
         <div>
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Maturity</p>
-          <p className="stat-value font-mono text-sm">{maturityDays}d</p>
+          <p className="label-mono">maturity</p>
+          <p className="mt-0.5 font-mono text-xs font-medium">{maturityDays}d</p>
         </div>
         <div>
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Sharpe at Issue</p>
-          <p className="stat-value font-mono text-sm">{sharpeDisplay}</p>
+          <p className="label-mono">sharpe</p>
+          <p className="mt-0.5 font-mono text-xs font-medium">{sharpeDisplay}</p>
         </div>
         <div>
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Price</p>
-          <p className="stat-value font-mono text-sm">{priceDisplay} BNB</p>
+          <p className="label-mono">price</p>
+          <p className="mt-0.5 font-mono text-xs font-medium">{priceDisplay} BNB</p>
         </div>
       </div>
 
       {/* Supply bar */}
-      <div className="mt-4">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-[rgb(var(--muted-foreground))]">Supply</span>
-          <span className="font-mono">
-            {totalIssued.toLocaleString()} / {maxSupply.toLocaleString()}
+      <div className="mt-3 border-t pt-3">
+        <div className="flex items-center justify-between text-2xs">
+          <span className="label-mono">supply</span>
+          <span className="font-mono text-xs">
+            {totalIssued} / {maxSupply}
           </span>
         </div>
-        <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[rgb(var(--secondary))]">
+        <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-secondary">
           <div
-            className="h-full rounded-full bg-[#D4A853] transition-all duration-500"
+            className="h-full rounded-full bg-gold transition-all duration-300"
             style={{ width: `${fillPct}%` }}
           />
         </div>

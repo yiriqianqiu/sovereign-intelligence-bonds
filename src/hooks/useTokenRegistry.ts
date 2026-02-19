@@ -39,13 +39,13 @@ export function useTokenInfo(token: `0x${string}` | undefined) {
 
   const info: TokenInfo | null = data
     ? (() => {
-        const d = data as { symbol: string; decimals: number; priceUsd: bigint; isActive: boolean; addedAt: bigint };
+        const d = data as unknown as readonly [string, number, bigint, boolean, bigint];
         return {
-          symbol: d.symbol,
-          decimals: d.decimals,
-          priceUsd: formatEther(d.priceUsd),
-          isActive: d.isActive,
-          addedAt: Number(d.addedAt),
+          symbol: d[0],
+          decimals: d[1],
+          priceUsd: formatEther(d[2]),
+          isActive: d[3],
+          addedAt: Number(d[4]),
         };
       })()
     : null;

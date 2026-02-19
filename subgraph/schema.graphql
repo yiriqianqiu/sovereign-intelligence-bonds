@@ -162,7 +162,7 @@ type CollateralWrap @entity {
   wrapped: Boolean!
 }
 
-type X402Payment @entity {
+type B402Payment @entity {
   id: ID!
   payer: Bytes!
   agentId: BigInt!

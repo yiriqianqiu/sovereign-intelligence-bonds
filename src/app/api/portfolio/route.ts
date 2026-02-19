@@ -22,31 +22,9 @@ const dividendAbi = DividendVaultV2ABI;
 
 const CREDIT_LABELS = ["Unrated", "C", "B", "A", "AA", "AAA"] as const;
 
-type BondClass = {
-  agentId: bigint;
-  couponRateBps: bigint;
-  maturityPeriod: bigint;
-  sharpeRatioAtIssue: bigint;
-  maxSupply: bigint;
-  exists: boolean;
-};
-
-type BondNonce = {
-  issueTimestamp: bigint;
-  maturityTimestamp: bigint;
-  totalIssued: bigint;
-  pricePerBond: bigint;
-  redeemable: boolean;
-  exists: boolean;
-};
-
-type AgentMetadata = {
-  name: string;
-  description: string;
-  modelHash: string;
-  endpoint: string;
-  registeredAt: bigint;
-};
+type BondClassTuple = readonly [bigint, bigint, bigint, bigint, bigint, boolean];
+type BondNonceTuple = readonly [bigint, bigint, bigint, bigint, boolean, boolean];
+type AgentMetadataTuple = readonly [string, string, string, string, bigint];
 
 export async function GET(request: Request) {
   try {
@@ -98,26 +76,17 @@ export async function GET(request: Request) {
 
         if (!hasIPO) continue;
 
-        const classId = (await client.readContract({
+        // v2: get all bond class IDs for this agent
+        const classIds = (await client.readContract({
           address: ADDRESSES.SIBControllerV2,
           abi: controllerAbi,
-          functionName: "agentBondClass",
+          functionName: "getAgentBondClasses",
           args: [tokenId],
-        })) as bigint;
+        })) as bigint[];
 
-        const [bondClass, nonceCount, metadata, rating] = (await Promise.all([
-          client.readContract({
-            address: ADDRESSES.SIBBondManager,
-            abi: bondAbi,
-            functionName: "bondClasses",
-            args: [classId],
-          }),
-          client.readContract({
-            address: ADDRESSES.SIBBondManager,
-            abi: bondAbi,
-            functionName: "nextNonceId",
-            args: [classId],
-          }),
+        if (!classIds || classIds.length === 0) continue;
+
+        const [metadata, rating] = (await Promise.all([
           client.readContract({
             address: ADDRESSES.NFARegistry,
             abi: nfaAbi,
@@ -130,51 +99,72 @@ export async function GET(request: Request) {
             functionName: "creditRatings",
             args: [tokenId],
           }),
-        ])) as [BondClass, bigint, AgentMetadata, number];
+        ])) as [AgentMetadataTuple, number];
 
-        const nonceTotal = Number(nonceCount);
-
-        for (let n = 0; n < nonceTotal; n++) {
+        for (const classId of classIds) {
           try {
-            const balance = (await client.readContract({
-              address: ADDRESSES.SIBBondManager,
-              abi: bondAbi,
-              functionName: "balanceOf",
-              args: [holderAddress, classId, BigInt(n)],
-            })) as bigint;
-
-            if (balance === BigInt(0)) continue;
-
-            const [nonce, claimable] = (await Promise.all([
+            const [bondClass, nonceCount] = (await Promise.all([
               client.readContract({
                 address: ADDRESSES.SIBBondManager,
                 abi: bondAbi,
-                functionName: "bondNonces",
-                args: [classId, BigInt(n)],
+                functionName: "bondClasses",
+                args: [classId],
               }),
               client.readContract({
-                address: ADDRESSES.DividendVaultV2,
-                abi: dividendAbi,
-                functionName: "claimable",
-                args: [holderAddress, classId, BigInt(n), "0x0000000000000000000000000000000000000000" as `0x${string}`],
+                address: ADDRESSES.SIBBondManager,
+                abi: bondAbi,
+                functionName: "nextNonceId",
+                args: [classId],
               }),
-            ])) as [BondNonce, bigint];
+            ])) as [BondClassTuple, bigint];
 
-            totalClaimable += claimable;
+            const nonceTotal = Number(nonceCount);
 
-            positions.push({
-              classId: Number(classId),
-              nonceId: n,
-              agentId: Number(bondClass.agentId),
-              agentName: metadata.name,
-              balance: balance.toString(),
-              pricePerBond: nonce.pricePerBond.toString(),
-              couponRateBps: Number(bondClass.couponRateBps),
-              maturityTimestamp: Number(nonce.maturityTimestamp),
-              redeemable: nonce.redeemable,
-              claimableDividends: claimable.toString(),
-              creditRating: CREDIT_LABELS[rating] ?? "Unrated",
-            });
+            for (let n = 0; n < nonceTotal; n++) {
+              try {
+                const balance = (await client.readContract({
+                  address: ADDRESSES.SIBBondManager,
+                  abi: bondAbi,
+                  functionName: "balanceOf",
+                  args: [holderAddress, classId, BigInt(n)],
+                })) as bigint;
+
+                if (balance === BigInt(0)) continue;
+
+                const [nonce, claimable] = (await Promise.all([
+                  client.readContract({
+                    address: ADDRESSES.SIBBondManager,
+                    abi: bondAbi,
+                    functionName: "bondNonces",
+                    args: [classId, BigInt(n)],
+                  }),
+                  client.readContract({
+                    address: ADDRESSES.DividendVaultV2,
+                    abi: dividendAbi,
+                    functionName: "claimable",
+                    args: [holderAddress, classId, BigInt(n), "0x0000000000000000000000000000000000000000" as `0x${string}`],
+                  }),
+                ])) as [BondNonceTuple, bigint];
+
+                totalClaimable += claimable;
+
+                positions.push({
+                  classId: Number(classId),
+                  nonceId: n,
+                  agentId: Number(bondClass[0]),
+                  agentName: metadata[0],
+                  balance: balance.toString(),
+                  pricePerBond: nonce[3].toString(),
+                  couponRateBps: Number(bondClass[1]),
+                  maturityTimestamp: Number(nonce[1]),
+                  redeemable: nonce[4],
+                  claimableDividends: claimable.toString(),
+                  creditRating: CREDIT_LABELS[rating] ?? "Unrated",
+                });
+              } catch {
+                continue;
+              }
+            }
           } catch {
             continue;
           }

@@ -442,7 +442,7 @@
         "type": "uint256"
       }
     ],
-    "name": "X402RevenueReceived",
+    "name": "B402RevenueReceived",
     "type": "event"
   },
   {
@@ -847,7 +847,7 @@
         "type": "uint256"
       }
     ],
-    "name": "receiveX402PaymentBNB",
+    "name": "receiveB402PaymentBNB",
     "outputs": [],
     "stateMutability": "payable",
     "type": "function"
@@ -870,7 +870,7 @@
         "type": "uint256"
       }
     ],
-    "name": "receiveX402PaymentERC20",
+    "name": "receiveB402PaymentERC20",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

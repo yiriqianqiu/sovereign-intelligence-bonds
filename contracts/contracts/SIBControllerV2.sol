@@ -117,7 +117,7 @@ contract SIBControllerV2 is Ownable, ReentrancyGuard, Pausable {
     event IPOInitiated(uint256 indexed agentId, uint256 indexed classId, uint256 nonceId, uint256 couponRateBps, uint256 pricePerBond, address paymentToken);
     event TranchedIPOInitiated(uint256 indexed agentId, uint256 indexed groupId, uint256 seniorClassId, uint256 juniorClassId);
     event BondsPurchased(address indexed buyer, uint256 indexed classId, uint256 nonceId, uint256 amount, uint256 totalCost, address paymentToken);
-    event X402RevenueReceived(uint256 indexed agentId, address indexed token, uint256 amount, uint256 bondholderShare, uint256 ownerShare);
+    event B402RevenueReceived(uint256 indexed agentId, address indexed token, uint256 amount, uint256 bondholderShare, uint256 ownerShare);
     event DividendsDistributed(uint256 indexed classId, uint256 nonceId, address token, uint256 amount);
     event SharpeProofVerified(uint256 indexed agentId, uint256 sharpeRatio, bytes32 proofHash);
     event CouponAdjusted(uint256 indexed classId, uint256 oldCoupon, uint256 newCoupon);
@@ -253,12 +253,12 @@ contract SIBControllerV2 is Ownable, ReentrancyGuard, Pausable {
 
     // --- Revenue Functions ---
 
-    function receiveX402PaymentBNB(uint256 agentId) external payable nonReentrant whenNotPaused {
+    function receiveB402PaymentBNB(uint256 agentId) external payable nonReentrant whenNotPaused {
         require(msg.value > 0, "SIBControllerV2: zero payment");
         _processRevenue(agentId, address(0), msg.value);
     }
 
-    function receiveX402PaymentERC20(uint256 agentId, address token, uint256 amount) external nonReentrant whenNotPaused {
+    function receiveB402PaymentERC20(uint256 agentId, address token, uint256 amount) external nonReentrant whenNotPaused {
         require(amount > 0, "SIBControllerV2: zero payment");
         require(token != address(0), "SIBControllerV2: use BNB variant");
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
@@ -283,7 +283,7 @@ contract SIBControllerV2 is Ownable, ReentrancyGuard, Pausable {
             }
         }
 
-        emit X402RevenueReceived(agentId, token, amount, bondholderShare, ownerShare);
+        emit B402RevenueReceived(agentId, token, amount, bondholderShare, ownerShare);
     }
 
     function distributeDividends(uint256 classId, uint256 nonceId) external whenNotPaused {

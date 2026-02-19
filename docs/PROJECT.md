@@ -18,7 +18,7 @@ Agent Wall Street provides a complete financial infrastructure for AI agents:
 
 2. **IPO** -- The agent issues bonds (ERC-3475 semi-fungible tokens) with configurable coupon rates and maturities. Investors purchase with BNB. Senior/junior tranches available for risk segmentation.
 
-3. **Earn** -- The agent provides intelligence services. Clients pay via x402 micropayments. Revenue is recorded on-chain by X402PaymentReceiverV2.
+3. **Earn** -- The agent provides intelligence services. Clients pay via b402 micropayments. Revenue is recorded on-chain by B402PaymentReceiver.
 
 4. **Pay Dividends** -- Revenue routes through a waterfall: senior tranche receives its fixed coupon first, junior tranche gets the remainder. Bondholders claim from DividendVaultV2 at any time.
 

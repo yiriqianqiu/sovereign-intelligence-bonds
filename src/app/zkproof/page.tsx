@@ -87,10 +87,10 @@ export default function ZkProofPage() {
               args: [agentId as bigint],
             }),
           ]);
-          const md = metadata as { name: string };
+          const md = metadata as unknown as readonly [string, string, string, string, bigint];
           agents.push({
             id: Number(agentId),
-            name: md.name,
+            name: md[0],
             creditRating: Number(rating),
           });
         } catch {
@@ -309,21 +309,21 @@ export default function ZkProofPage() {
 
   const currentSharpe =
     revenueProfile
-      ? formatEther((revenueProfile as { sharpeRatio: bigint }).sharpeRatio)
+      ? formatEther((revenueProfile as unknown as readonly [bigint, bigint, bigint, bigint, `0x${string}`])[3])
       : null;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">zkML Proof Panel</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="font-heading text-xl font-bold tracking-tight">zkML Proof Panel</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
           Generate verifiable Sharpe ratio proofs using EZKL and submit them on-chain.
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Input Section */}
-        <div className="card-glass rounded-lg p-6 space-y-5">
+        <div className="card-glass rounded p-6 space-y-5">
           <h2 className="text-lg font-semibold">Proof Input</h2>
 
           {/* Agent Select */}
@@ -337,7 +337,7 @@ export default function ZkProofPage() {
                 setSelectedAgent(e.target.value ? Number(e.target.value) : null)
               }
               disabled={agentsLoading}
-              className="w-full cursor-pointer rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-gold"
+              className="w-full cursor-pointer rounded border border-border bg-secondary px-4 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-gold"
             >
               <option value="">
                 {agentsLoading
@@ -357,14 +357,14 @@ export default function ZkProofPage() {
           {/* Current On-Chain Stats */}
           {selectedAgent !== null && currentRating !== undefined && (
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-secondary/50 px-3 py-2">
-                <p className="text-xs text-muted-foreground">Current Rating</p>
+              <div className="rounded bg-secondary/50 px-3 py-2">
+                <p className="label-mono">Current Rating</p>
                 <p className="font-mono text-sm text-gold">
                   {creditRatingLabel(Number(currentRating))}
                 </p>
               </div>
-              <div className="rounded-lg bg-secondary/50 px-3 py-2">
-                <p className="text-xs text-muted-foreground">On-Chain Sharpe</p>
+              <div className="rounded bg-secondary/50 px-3 py-2">
+                <p className="label-mono">On-Chain Sharpe</p>
                 <p className="font-mono text-sm text-foreground">
                   {currentSharpe ? Number(currentSharpe).toFixed(4) : "0.0000"}
                 </p>
@@ -382,7 +382,7 @@ export default function ZkProofPage() {
               onChange={(e) => setReturnsInput(e.target.value)}
               rows={5}
               placeholder="0.02, -0.01, 0.03, 0.015, -0.005, 0.01, 0.025, -0.008, 0.02, 0.012, 0.018, -0.003, 0.007, 0.022, -0.01, 0.015, 0.009, -0.002, 0.03, 0.011, -0.006, 0.02, 0.014, 0.008, -0.004, 0.019, 0.013, -0.007, 0.025, 0.016"
-              className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 font-mono text-sm text-foreground outline-none transition-colors focus:border-gold resize-none"
+              className="w-full rounded border border-border bg-secondary px-4 py-2.5 font-mono text-sm text-foreground outline-none transition-colors focus:border-gold resize-none"
             />
             <p className="mt-1 text-xs text-muted-foreground">
               {parsedReturns
@@ -397,7 +397,7 @@ export default function ZkProofPage() {
           <button
             onClick={handleGenerateProof}
             disabled={!canGenerate}
-            className="w-full cursor-pointer rounded-lg px-4 py-2 font-medium transition-colors duration-200 bg-gold text-background hover:bg-gold/90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="w-full cursor-pointer rounded px-4 py-2 font-medium transition-colors duration-200 bg-gold text-background hover:bg-gold/90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {proof.status === "pending" || proof.status === "generating"
               ? "Generating..."
@@ -408,7 +408,7 @@ export default function ZkProofPage() {
         {/* Status & Result Section */}
         <div className="space-y-6">
           {/* Status */}
-          <div className="card-glass rounded-lg p-6 space-y-4">
+          <div className="card-glass rounded p-6 space-y-4">
             <h2 className="text-lg font-semibold">Proof Status</h2>
 
             {proof.status === "idle" ? (
@@ -452,12 +452,12 @@ export default function ZkProofPage() {
 
           {/* Result */}
           {proof.result && (
-            <div className="card-glass glow-gold rounded-lg p-6 space-y-4">
+            <div className="card-glass rounded p-6 space-y-4">
               <h2 className="text-lg font-semibold">Proof Result</h2>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <p className="label-mono">
                     Sharpe Ratio
                   </p>
                   <p className="mt-1 stat-value font-mono text-2xl text-gold">
@@ -465,7 +465,7 @@ export default function ZkProofPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <p className="label-mono">
                     Verification
                   </p>
                   <p
@@ -477,7 +477,7 @@ export default function ZkProofPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <p className="label-mono">
                     Circuit Size
                   </p>
                   <p className="mt-1 stat-value font-mono text-lg text-foreground">
@@ -485,7 +485,7 @@ export default function ZkProofPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <p className="label-mono">
                     Proving Time
                   </p>
                   <p className="mt-1 stat-value font-mono text-lg text-foreground">
@@ -495,7 +495,7 @@ export default function ZkProofPage() {
               </div>
 
               <div>
-                <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <p className="label-mono mb-1">
                   Proof Hash
                 </p>
                 <p className="break-all rounded bg-secondary px-3 py-2 font-mono text-xs text-foreground">
@@ -509,7 +509,7 @@ export default function ZkProofPage() {
                   <button
                     onClick={handleSubmitOnChain}
                     disabled={isWritePending || isTxConfirming}
-                    className="w-full cursor-pointer rounded-lg px-4 py-2 font-medium transition-colors duration-200 bg-gold text-background hover:bg-gold/90 disabled:opacity-50"
+                    className="w-full cursor-pointer rounded px-4 py-2 font-medium transition-colors duration-200 bg-gold text-background hover:bg-gold/90 disabled:opacity-50"
                   >
                     {isWritePending
                       ? "Confirm in Wallet..."

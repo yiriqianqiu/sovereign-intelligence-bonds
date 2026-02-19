@@ -50,21 +50,11 @@ export default function GovernancePage() {
               args: [BigInt(i)],
             });
 
-            const d = proposal as {
-              classId: bigint;
-              proposalType: number;
-              newValue: bigint;
-              forVotes: bigint;
-              againstVotes: bigint;
-              startTime: bigint;
-              endTime: bigint;
-              state: number;
-              proposer: `0x${string}`;
-            };
+            const d = proposal as unknown as readonly [bigint, number, bigint, bigint, bigint, bigint, bigint, number, `0x${string}`];
 
             summaries.push({
               proposalId: i,
-              state: d.state,
+              state: d[7],
             });
           } catch {
             // Skip proposals that can't be read
@@ -97,28 +87,28 @@ export default function GovernancePage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Governance</h1>
-        <p className="mt-1 text-sm text-[rgb(var(--muted-foreground))]">
+        <h1 className="font-heading text-xl font-bold tracking-tight">Governance</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
           Bond holder voting on protocol parameters
         </p>
       </div>
 
       {/* Stats Row */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="card-glass rounded-xl p-4">
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Proposals</p>
+        <div className="rounded border bg-card p-4">
+          <p className="label-mono">Total Proposals</p>
           <p className="stat-value font-mono text-2xl text-gold">
             {countLoading ? "..." : (proposalCount ?? 0)}
           </p>
         </div>
-        <div className="card-glass rounded-xl p-4">
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Quorum</p>
+        <div className="rounded border bg-card p-4">
+          <p className="label-mono">Quorum</p>
           <p className="stat-value font-mono text-2xl">
             {quorumLoading ? "..." : quorumDisplay}
           </p>
         </div>
-        <div className="card-glass rounded-xl p-4">
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Voting Period</p>
+        <div className="rounded border bg-card p-4">
+          <p className="label-mono">Voting Period</p>
           <p className="stat-value font-mono text-2xl">
             {periodLoading ? "..." : votingPeriodDays}
           </p>
@@ -131,10 +121,10 @@ export default function GovernancePage() {
           <button
             key={tab}
             onClick={() => setFilter(tab)}
-            className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            className={`cursor-pointer rounded px-3 py-1.5 text-xs font-medium transition-colors ${
               filter === tab
-                ? "bg-[#D4A853]/15 text-gold"
-                : "bg-[rgb(var(--secondary))] text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--border))]"
+                ? "text-gold"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}

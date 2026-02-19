@@ -22,7 +22,7 @@ export function IndexCompositionChart({ indexId }: IndexCompositionChartProps) {
 
   if (indexLoading || !index) {
     return (
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <p className="text-sm text-[rgb(var(--muted-foreground))]">Loading index data...</p>
       </div>
     );
@@ -36,7 +36,7 @@ export function IndexCompositionChart({ indexId }: IndexCompositionChartProps) {
   }));
 
   return (
-    <div className="card-glass rounded-xl p-6">
+    <div className="card-glass rounded p-6">
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-base font-semibold">{index.name}</h3>

@@ -1,7 +1,7 @@
 import { parseAbi, parseEther } from "viem";
 import { config } from "./config.js";
 import { publicClient, getWalletClient } from "./chain.js";
-import { X402ReceiverABI } from "./abis.js";
+import { B402ReceiverABI } from "./abis.js";
 
 const LOG_PREFIX = "[revenue]";
 
@@ -23,8 +23,8 @@ export async function forwardBNBPayment(req: PayBNBRequest): Promise<string> {
 
   const walletClient = await getWalletClient();
   const txHash = await walletClient.writeContract({
-    address: config.x402ReceiverAddress,
-    abi: parseAbi(X402ReceiverABI),
+    address: config.b402ReceiverAddress,
+    abi: parseAbi(B402ReceiverABI),
     functionName: "payBNB",
     args: [BigInt(req.agentId), req.endpoint],
     value: parseEther(req.amountBnb),
@@ -42,8 +42,8 @@ export async function forwardERC20Payment(req: PayERC20Request): Promise<string>
 
   const walletClient = await getWalletClient();
   const txHash = await walletClient.writeContract({
-    address: config.x402ReceiverAddress,
-    abi: parseAbi(X402ReceiverABI),
+    address: config.b402ReceiverAddress,
+    abi: parseAbi(B402ReceiverABI),
     functionName: "payERC20",
     args: [BigInt(req.agentId), req.token, BigInt(req.amount), req.endpoint],
   });

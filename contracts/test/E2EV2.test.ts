@@ -42,9 +42,9 @@ describe("E2E V2: Full Integration", function () {
     await tranchingEngine.setController(controllerAddr);
     await controller.setTranchingEngine(await tranchingEngine.getAddress());
 
-    // --- Deploy X402PaymentReceiverV2 ---
-    const x402V2 = await (await ethers.getContractFactory("X402PaymentReceiverV2")).deploy();
-    await x402V2.setController(controllerAddr);
+    // --- Deploy B402PaymentReceiver ---
+    const b402 = await (await ethers.getContractFactory("B402PaymentReceiver")).deploy();
+    await b402.setController(controllerAddr);
 
     // --- Deploy LiquidationEngine ---
     const liquidationEngine = await (await ethers.getContractFactory("LiquidationEngine")).deploy(
@@ -106,7 +106,7 @@ describe("E2E V2: Full Integration", function () {
       ethers, connection, networkHelpers,
       deployer, agentOwner, agentOwner2, investor1, investor2, payer,
       mockVerifier, tokenRegistry, registry, bondManager, vaultV2,
-      controller, tranchingEngine, x402V2, liquidationEngine,
+      controller, tranchingEngine, b402, liquidationEngine,
       bondDEX, governor, autoCompoundVault, mockDividendVaultForAC, mockControllerForAC,
       indexBond, collateralWrapper, mockUSDT, mockUSDC,
     };
@@ -127,7 +127,7 @@ describe("E2E V2: Full Integration", function () {
   // =====================================================
   // Scenario 1: Full lifecycle with tranching
   // =====================================================
-  it("1. Full lifecycle with tranching: register -> proof -> tranchedIPO -> buy senior+junior -> x402 -> waterfall -> claim -> redeem", async function () {
+  it("1. Full lifecycle with tranching: register -> proof -> tranchedIPO -> buy senior+junior -> b402 -> waterfall -> claim -> redeem", async function () {
     const fix = await deployAllV2();
     const {
       registry, bondManager, vaultV2, controller, tranchingEngine,
@@ -168,9 +168,9 @@ describe("E2E V2: Full Integration", function () {
     assert.equal(await bondManager.balanceOf(investor1.address, seniorClassId, 0), 100n);
     assert.equal(await bondManager.balanceOf(investor2.address, juniorClassId, 0), 50n);
 
-    // x402 BNB revenue
+    // b402 BNB revenue
     const payment = ethers.parseEther("2.0");
-    await controller.connect(payer).receiveX402PaymentBNB(agentId, { value: payment });
+    await controller.connect(payer).receiveB402PaymentBNB(agentId, { value: payment });
 
     const pool = await controller.revenuePool(agentId, ethers.ZeroAddress);
     assert.equal(pool, ethers.parseEther("1.4")); // 70% of 2.0
@@ -333,7 +333,7 @@ describe("E2E V2: Full Integration", function () {
   // =====================================================
   // Scenario 5: Multi-token (ERC-20) flow
   // =====================================================
-  it("5. Multi-token: IPO with USDT -> purchaseBondsERC20 -> receiveX402PaymentERC20 -> distribute -> claim ERC20", async function () {
+  it("5. Multi-token: IPO with USDT -> purchaseBondsERC20 -> receiveB402PaymentERC20 -> distribute -> claim ERC20", async function () {
     const fix = await deployAllV2();
     const {
       registry, bondManager, vaultV2, controller, mockUSDT,
@@ -357,10 +357,10 @@ describe("E2E V2: Full Integration", function () {
     assert.equal(await bondManager.balanceOf(investor1.address, classId, 0), 10n);
     assert.equal(await mockUSDT.balanceOf(investor1.address), ethers.parseEther("900")); // 1000 - 100
 
-    // x402 ERC20 payment
+    // b402 ERC20 payment
     await mockUSDT.mint(payer.address, ethers.parseEther("100"));
     await mockUSDT.connect(payer).approve(await controller.getAddress(), ethers.parseEther("100"));
-    await controller.connect(payer).receiveX402PaymentERC20(agentId, tokenAddr, ethers.parseEther("50"));
+    await controller.connect(payer).receiveB402PaymentERC20(agentId, tokenAddr, ethers.parseEther("50"));
 
     const pool = await controller.revenuePool(agentId, tokenAddr);
     assert.equal(pool, ethers.parseEther("35")); // 70% of 50
@@ -558,7 +558,7 @@ describe("E2E V2: Full Integration", function () {
 
     // Send revenue to build up credit factors
     for (let i = 0; i < 3; i++) {
-      await controller.connect(payer).receiveX402PaymentBNB(agentId, { value: ethers.parseEther("10") });
+      await controller.connect(payer).receiveB402PaymentBNB(agentId, { value: ethers.parseEther("10") });
     }
 
     const highCoupon = await controller.calculateDynamicCoupon(classId);
@@ -585,7 +585,7 @@ describe("E2E V2: Full Integration", function () {
   // =====================================================
   // Scenario 10: Multi-agent multi-series
   // =====================================================
-  it("10. Multi-agent multi-series: 2 agents x 2 IPOs -> buy from all 4 -> x402 -> distribute -> verify independent pools", async function () {
+  it("10. Multi-agent multi-series: 2 agents x 2 IPOs -> buy from all 4 -> b402 -> distribute -> verify independent pools", async function () {
     const fix = await deployAllV2();
     const {
       registry, bondManager, vaultV2, controller,
@@ -616,9 +616,9 @@ describe("E2E V2: Full Integration", function () {
       await controller.connect(investor1).purchaseBondsBNB(classId, 10, { value: price * 10n });
     }
 
-    // x402 payments to each agent
-    await controller.connect(payer).receiveX402PaymentBNB(agent1, { value: ethers.parseEther("1.0") });
-    await controller.connect(payer).receiveX402PaymentBNB(agent2, { value: ethers.parseEther("2.0") });
+    // b402 payments to each agent
+    await controller.connect(payer).receiveB402PaymentBNB(agent1, { value: ethers.parseEther("1.0") });
+    await controller.connect(payer).receiveB402PaymentBNB(agent2, { value: ethers.parseEther("2.0") });
 
     // Verify independent pools
     const pool1 = await controller.revenuePool(agent1, ethers.ZeroAddress);
@@ -649,7 +649,7 @@ describe("E2E V2: Full Integration", function () {
   // =====================================================
   // Scenario 11: Bond transfer with dividend
   // =====================================================
-  it("11. Bond transfer with dividend: IPO -> buy 100 -> x402 -> transfer 50 -> distribute -> verify proportional claim", async function () {
+  it("11. Bond transfer with dividend: IPO -> buy 100 -> b402 -> transfer 50 -> distribute -> verify proportional claim", async function () {
     const fix = await deployAllV2();
     const {
       registry, bondManager, vaultV2, controller,
@@ -666,8 +666,8 @@ describe("E2E V2: Full Integration", function () {
     // Investor1 buys 100 bonds
     await controller.connect(investor1).purchaseBondsBNB(classId, 100, { value: price * 100n });
 
-    // x402 payment
-    await controller.connect(payer).receiveX402PaymentBNB(agentId, { value: ethers.parseEther("1.0") });
+    // b402 payment
+    await controller.connect(payer).receiveB402PaymentBNB(agentId, { value: ethers.parseEther("1.0") });
 
     // Transfer 50 bonds from investor1 to investor2
     await controller.connect(investor1).transferBonds(investor2.address, classId, 0, 50);
@@ -698,7 +698,7 @@ describe("E2E V2: Full Integration", function () {
   // =====================================================
   // Scenario 12: Cross-feature combo
   // =====================================================
-  it("12. Cross-feature combo: register -> IPO -> buy -> sell on DEX -> fill -> x402 -> distribute -> governance proposal -> vote", async function () {
+  it("12. Cross-feature combo: register -> IPO -> buy -> sell on DEX -> fill -> b402 -> distribute -> governance proposal -> vote", async function () {
     const fix = await deployAllV2();
     const {
       registry, bondManager, vaultV2, controller, bondDEX, governor,
@@ -728,8 +728,8 @@ describe("E2E V2: Full Integration", function () {
     assert.equal(await bondManager.balanceOf(investor1.address, classId, 0), 300n);
     assert.equal(await bondManager.balanceOf(investor2.address, classId, 0), 200n);
 
-    // --- x402 revenue ---
-    await controller.connect(payer).receiveX402PaymentBNB(agentId, { value: ethers.parseEther("5.0") });
+    // --- b402 revenue ---
+    await controller.connect(payer).receiveB402PaymentBNB(agentId, { value: ethers.parseEther("5.0") });
 
     // --- Distribute ---
     await controller.connect(agentOwner).distributeDividends(classId, 0);
@@ -761,5 +761,235 @@ describe("E2E V2: Full Integration", function () {
     // Verify claimed (nothing left)
     assert.equal(await vaultV2.claimable(investor1.address, classId, 0, ethers.ZeroAddress), 0n);
     assert.equal(await vaultV2.claimable(investor2.address, classId, 0, ethers.ZeroAddress), 0n);
+  });
+
+  // =====================================================
+  // Scenario 13: GreenfieldDataVault
+  // =====================================================
+  it("13. GreenfieldDataVault: register agent -> register data asset -> verify -> deactivate -> check counts", async function () {
+    const fix = await deployAllV2();
+    const { registry, ethers, deployer, agentOwner } = fix;
+
+    const counter = createAgentCounter();
+    const agentId = await registerAndActivate(registry, agentOwner, counter);
+
+    // Deploy GreenfieldDataVault
+    const dataVault = await (await ethers.getContractFactory("GreenfieldDataVault")).deploy(
+      await registry.getAddress()
+    );
+
+    // Register 2 data assets
+    const hash1 = ethers.keccak256(ethers.toUtf8Bytes("model-weights-v1"));
+    const hash2 = ethers.keccak256(ethers.toUtf8Bytes("training-data-v1"));
+
+    await dataVault.connect(agentOwner).registerDataAsset(
+      agentId, "sib-bucket", "model.onnx", hash1, 0, 1024000 // DataType.Model
+    );
+    await dataVault.connect(agentOwner).registerDataAsset(
+      agentId, "sib-bucket", "train.csv", hash2, 1, 5000000 // DataType.Training
+    );
+
+    assert.equal(await dataVault.getAgentAssetCount(agentId), 2n);
+    assert.equal(await dataVault.getTotalDataSize(agentId), 6024000n);
+
+    // Verify asset 1 (by owner since no verifier set)
+    await dataVault.connect(deployer).verifyAsset(1);
+    const asset1 = await dataVault.dataAssets(1);
+    assert.equal(asset1.verified, true);
+    assert.equal(await dataVault.getVerifiedAssetCount(agentId), 1n);
+
+    // Deactivate asset 2
+    await dataVault.connect(agentOwner).deactivateAsset(2);
+    const asset2 = await dataVault.dataAssets(2);
+    assert.equal(asset2.active, false);
+
+    // Total active data size should now only be asset 1
+    assert.equal(await dataVault.getTotalDataSize(agentId), 1024000n);
+
+    // Duplicate hash should revert
+    await assert.rejects(
+      dataVault.connect(agentOwner).registerDataAsset(agentId, "sib-bucket", "dup.onnx", hash1, 0, 100),
+      /duplicate hash/
+    );
+  });
+
+  // =====================================================
+  // Scenario 14: ComputeMarketplace
+  // =====================================================
+  it("14. ComputeMarketplace: register resource -> rent BNB -> end rental -> claim payment -> verify fees", async function () {
+    const fix = await deployAllV2();
+    const { registry, tokenRegistry, ethers, deployer, agentOwner, investor1: provider } = fix;
+
+    const counter = createAgentCounter();
+    const agentId = await registerAndActivate(registry, agentOwner, counter);
+
+    // Deploy ComputeMarketplace
+    const compute = await (await ethers.getContractFactory("ComputeMarketplace")).deploy(
+      await registry.getAddress(),
+      await tokenRegistry.getAddress()
+    );
+
+    // Provider registers a GPU resource: 0.01 BNB/hour, no credit/level gate, 10 units
+    const pricePerHour = ethers.parseEther("0.01");
+    await compute.connect(provider).registerResource(
+      "A100-GPU", "NVIDIA A100 80GB", 1, // ResourceType.GPU
+      pricePerHour, ethers.ZeroAddress, 0, 0, 10
+    );
+
+    // Agent rents 2 units for 5 hours -> cost = 0.01 * 2 * 5 = 0.1 BNB
+    const totalCost = pricePerHour * 2n * 5n;
+    await compute.connect(agentOwner).rentComputeBNB(agentId, 1, 2, 5, { value: totalCost });
+
+    // Verify rental
+    const rental = await compute.rentals(1);
+    assert.equal(rental.agentId, agentId);
+    assert.equal(rental.unitsRented, 2n);
+    assert.equal(rental.active, true);
+
+    // Verify resource capacity used
+    const res = await compute.resources(1);
+    assert.equal(res.usedCapacity, 2n);
+
+    // Check eligibility
+    assert.equal(await compute.isEligible(agentId, 1), true);
+
+    // Fast forward 2 hours so endRental calculates non-zero usedCost
+    await fix.connection.provider.send("evm_increaseTime", [7200]);
+    await fix.connection.provider.send("evm_mine", []);
+
+    // End rental (agent owner)
+    await compute.connect(agentOwner).endRental(1);
+    const rentalAfter = await compute.rentals(1);
+    assert.equal(rentalAfter.active, false);
+
+    // Capacity restored
+    const resAfter = await compute.resources(1);
+    assert.equal(resAfter.usedCapacity, 0n);
+
+    // Provider claims payment
+    const providerBalBefore = await ethers.provider.getBalance(provider.address);
+    await compute.connect(provider).claimPayment(1);
+    const providerBalAfter = await ethers.provider.getBalance(provider.address);
+    assert.ok(providerBalAfter > providerBalBefore, "Provider should receive payment");
+
+    // Verify rental settled
+    const rentalSettled = await compute.rentals(1);
+    assert.equal(rentalSettled.settled, true);
+  });
+
+  // =====================================================
+  // Scenario 15: Capital Evolution
+  // =====================================================
+  it("15. Capital Evolution: register -> IPO -> buy bonds -> verify evolution level increments via capitalRaised", async function () {
+    const fix = await deployAllV2();
+    const { registry, controller, ethers, deployer, agentOwner, investor1 } = fix;
+
+    const counter = createAgentCounter();
+    const agentId = await registerAndActivate(registry, agentOwner, counter);
+    const price = ethers.parseEther("0.01");
+
+    // Check initial evolution level
+    assert.equal(await registry.getEvolutionLevel(agentId), 0n);
+    assert.equal(await registry.getCapitalRaised(agentId), 0n);
+
+    // Get milestone thresholds
+    const thresholds = await registry.getMilestoneThresholds();
+    // thresholds[0] = Seed threshold (smallest)
+
+    // IPO with enough max supply to cross first milestone
+    await controller.connect(agentOwner).initiateIPO(agentId, 500, 86400 * 30, price, 100000, ethers.ZeroAddress);
+    const classes = await controller.getAgentBondClasses(agentId);
+    const classId = classes[0];
+
+    // Buy enough bonds to cross Seed threshold
+    const seedThreshold = thresholds[0];
+    const bondsNeeded = seedThreshold / price + 1n;
+    const buyAmount = bondsNeeded < 100000n ? bondsNeeded : 100000n;
+    await controller.connect(investor1).purchaseBondsBNB(classId, buyAmount, { value: price * buyAmount });
+
+    // Verify capital raised and evolution level
+    const capitalRaised = await registry.getCapitalRaised(agentId);
+    assert.ok(capitalRaised >= seedThreshold, "Capital raised should exceed seed threshold");
+
+    const level = await registry.getEvolutionLevel(agentId);
+    assert.ok(level >= 1n, `Evolution level should be >= 1 (Seed), got ${level}`);
+
+    // Verify merkle root was generated
+    const merkleRoot = await registry.getMerkleRoot(agentId);
+    assert.ok(merkleRoot !== ethers.ZeroHash, "Merkle root should be non-zero");
+  });
+
+  // =====================================================
+  // Scenario 16: TEE Delegation
+  // =====================================================
+  it("16. TEE: authorize TEE wallet -> push attestation -> TEE submits Sharpe proof -> TEE distributes dividends -> revoke", async function () {
+    const fix = await deployAllV2();
+    const {
+      registry, controller, vaultV2, ethers,
+      deployer, agentOwner, investor1, payer,
+    } = fix;
+
+    const counter = createAgentCounter();
+    const agentId = await registerAndActivate(registry, agentOwner, counter);
+
+    // Deploy TEERegistry
+    const teeRegistry = await (await ethers.getContractFactory("TEERegistry")).deploy(
+      await registry.getAddress()
+    );
+
+    // Set TEE registry on controller
+    await controller.connect(deployer).setTEERegistry(await teeRegistry.getAddress());
+
+    // Use investor1 as the TEE wallet (just a different signer)
+    const teeWallet = investor1;
+
+    // Authorize TEE wallet
+    await teeRegistry.connect(agentOwner).authorizeTEEAgent(agentId, teeWallet.address);
+    assert.equal(await teeRegistry.isTEEAgent(agentId, teeWallet.address), true);
+
+    // TEE pushes attestation
+    const quoteHash = ethers.keccak256(ethers.toUtf8Bytes("tdx-quote-sib-v1"));
+    await teeRegistry.connect(teeWallet).pushTEEAttestation(agentId, quoteHash);
+
+    // Verify TEE status
+    const status = await teeRegistry.getTEEStatus(agentId);
+    assert.equal(status.teeWallet, teeWallet.address);
+    assert.equal(status.quoteHash, quoteHash);
+    assert.equal(status.isActive, true);
+
+    // TEE submits Sharpe proof (on behalf of agent)
+    const proof = ethers.randomBytes(128);
+    const sharpe = ethers.parseEther("1.5");
+    await controller.connect(teeWallet).submitSharpeProof(agentId, proof, [sharpe]);
+
+    // Verify credit rating updated
+    const rating = await registry.creditRatings(agentId);
+    assert.ok(rating > 0n, "Credit rating should be updated after Sharpe proof");
+
+    // Setup: create IPO, buy bonds, send b402 revenue
+    const price = ethers.parseEther("0.01");
+    await controller.connect(agentOwner).initiateIPO(agentId, 500, 86400 * 30, price, 1000, ethers.ZeroAddress);
+    const classes = await controller.getAgentBondClasses(agentId);
+    const classId = classes[0];
+
+    await controller.connect(payer).purchaseBondsBNB(classId, 100, { value: price * 100n });
+    await controller.connect(payer).receiveB402PaymentBNB(agentId, { value: ethers.parseEther("1.0") });
+
+    // TEE distributes dividends
+    await controller.connect(teeWallet).distributeDividends(classId, 0);
+
+    // Verify distribution happened
+    const claimable = await vaultV2.claimable(payer.address, classId, 0, ethers.ZeroAddress);
+    assert.ok(claimable > 0n, "Payer/buyer should have claimable dividends after TEE distribution");
+
+    // Revoke TEE
+    await teeRegistry.connect(agentOwner).revokeTEEAgent(agentId);
+    assert.equal(await teeRegistry.isTEEAgent(agentId, teeWallet.address), false);
+
+    // TEE should no longer be able to act
+    await assert.rejects(
+      controller.connect(teeWallet).submitSharpeProof(agentId, ethers.randomBytes(64), [ethers.parseEther("2.0")]),
+      /not authorized|not agent owner/
+    );
   });
 });

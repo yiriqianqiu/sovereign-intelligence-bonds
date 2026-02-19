@@ -15,7 +15,7 @@ import {
   NFARegistryABI,
   SIBBondManagerV2ABI,
   SIBControllerV2ABI,
-  X402PaymentReceiverABI,
+  B402PaymentReceiverABI,
 } from "@/lib/contracts";
 import { ADDRESSES } from "@/lib/contract-addresses";
 import {
@@ -30,6 +30,8 @@ import {
 import { SharpeGauge } from "@/components/SharpeGauge";
 import { CreditScoreRadar } from "@/components/CreditScoreRadar";
 import { TEEStatusPanel } from "@/components/TEEStatusPanel";
+import { useAgentAssetCount, useVerifiedAssetCount, useTotalDataSize } from "@/hooks/useGreenfield";
+import { useActiveRentalCount, useAgentRentals } from "@/hooks/useComputeMarketplace";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
@@ -87,6 +89,77 @@ function RatingBadge({ rating }: { rating: CreditRating }) {
     >
       {rating}
     </span>
+  );
+}
+
+function DataAssetsSection({ agentId }: { agentId: number }) {
+  const { data: assetCount, isLoading: countLoading } = useAgentAssetCount(agentId);
+  const { data: verifiedCount } = useVerifiedAssetCount(agentId);
+  const { data: totalSize } = useTotalDataSize(agentId);
+
+  if (countLoading) return null;
+  if (assetCount === undefined || assetCount === 0) return null;
+
+  const sizeKB = totalSize ? (totalSize / 1024).toFixed(1) : "0";
+
+  return (
+    <div className="card-glass rounded p-5">
+      <h2 className="text-sm font-semibold text-[rgb(var(--muted-foreground))]">
+        Greenfield Data Vault
+      </h2>
+      <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
+        Decentralized data assets registered by this agent
+      </p>
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div>
+          <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Assets</p>
+          <p className="stat-value font-mono text-xl">{assetCount}</p>
+        </div>
+        <div>
+          <p className="text-xs text-[rgb(var(--muted-foreground))]">Verified</p>
+          <p className="stat-value font-mono text-xl text-sage">
+            {verifiedCount ?? 0}
+            <span className="ml-1 text-sm text-[rgb(var(--muted-foreground))]">
+              / {assetCount}
+            </span>
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Data Size</p>
+          <p className="stat-value font-mono text-xl">{sizeKB} KB</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ComputeRentalsSection({ agentId }: { agentId: number }) {
+  const { data: activeCount, isLoading: countLoading } = useActiveRentalCount(agentId);
+  const { data: rentalIds } = useAgentRentals(agentId);
+
+  if (countLoading) return null;
+  const totalRentals = rentalIds?.length ?? 0;
+  if (totalRentals === 0 && (activeCount === undefined || activeCount === 0)) return null;
+
+  return (
+    <div className="card-glass rounded p-5">
+      <h2 className="text-sm font-semibold text-[rgb(var(--muted-foreground))]">
+        Compute Marketplace
+      </h2>
+      <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
+        Compute resources rented by this agent
+      </p>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <p className="text-xs text-[rgb(var(--muted-foreground))]">Active Rentals</p>
+          <p className="stat-value font-mono text-xl text-sage">{activeCount ?? 0}</p>
+        </div>
+        <div>
+          <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Rentals</p>
+          <p className="stat-value font-mono text-xl">{totalRentals}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -151,7 +224,7 @@ export default function AgentDetailPage() {
     });
   }
 
-  // x402 Simulate Payment state
+  // b402 Simulate Payment state
   const [paymentAmount, setPaymentAmount] = useState("");
   const {
     writeContract: writePayment,
@@ -162,12 +235,12 @@ export default function AgentDetailPage() {
   const { isLoading: paymentConfirming, isSuccess: paymentSuccess } =
     useWaitForTransactionReceipt({ hash: paymentHash });
 
-  function handleX402Payment() {
+  function handleB402Payment() {
     if (!paymentAmount || Number(paymentAmount) <= 0) return;
     writePayment({
-      address: ADDRESSES.X402PaymentReceiverV2 as `0x${string}`,
-      abi: X402PaymentReceiverABI,
-      functionName: "pay",
+      address: ADDRESSES.B402PaymentReceiver as `0x${string}`,
+      abi: B402PaymentReceiverABI,
+      functionName: "payBNB",
       args: [agentId, "demo-endpoint"],
       value: parseEther(paymentAmount),
     });
@@ -230,35 +303,24 @@ export default function AgentDetailPage() {
           // no bond classes
         }
 
-        const meta = metadata as {
-          name: string;
-          description: string;
-          modelHash: string;
-          endpoint: string;
-          registeredAt: bigint;
-        };
-        const rev = revenue as {
-          totalEarned: bigint;
-          totalPayments: bigint;
-          lastPaymentTime: bigint;
-          sharpeRatio: bigint;
-        };
+        const meta = metadata as unknown as readonly [string, string, string, string, bigint];
+        const rev = revenue as unknown as readonly [bigint, bigint, bigint, bigint, `0x${string}`];
         const ratingNum = Number(rating);
 
         setAgentData({
-          name: meta.name,
-          description: meta.description,
-          modelHash: meta.modelHash,
-          endpoint: meta.endpoint,
-          registeredAt: meta.registeredAt,
+          name: meta[0],
+          description: meta[1],
+          modelHash: meta[2],
+          endpoint: meta[3],
+          registeredAt: meta[4],
           state: Number(state),
           owner: owner as string,
           creditRating: RATING_LABELS[ratingNum] || "Unrated",
           ratingIndex: ratingNum,
-          totalEarned: rev.totalEarned,
-          totalPayments: rev.totalPayments,
-          lastPaymentTime: rev.lastPaymentTime,
-          sharpeRatio: rev.sharpeRatio,
+          totalEarned: rev[0],
+          totalPayments: rev[1],
+          lastPaymentTime: rev[2],
+          sharpeRatio: rev[3],
           balance: balance as bigint,
           hasBondClasses: classIds.length > 0,
         });
@@ -409,11 +471,11 @@ export default function AgentDetailPage() {
       </div>
 
       {/* Agent Header */}
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">{agentData.name}</h1>
+              <h1 className="font-heading text-xl font-bold tracking-tight">{agentData.name}</h1>
               <RatingBadge rating={agentData.creditRating} />
               <span
                 className={`rounded-md px-2 py-1 text-xs font-medium ${
@@ -473,7 +535,7 @@ export default function AgentDetailPage() {
 
       {/* Activate Agent Button */}
       {showActivateButton && (
-        <div className="card-glass rounded-xl p-5">
+        <div className="card-glass rounded p-5">
           <h2 className="text-sm font-semibold">Agent is Registered but not Active</h2>
           <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
             Activate your agent to enable IPO and revenue features.
@@ -481,7 +543,7 @@ export default function AgentDetailPage() {
           <button
             onClick={handleActivate}
             disabled={activateIsPending || activateConfirming}
-            className="mt-3 cursor-pointer rounded-lg bg-sage px-5 py-2 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#4A7A5E] disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-3 cursor-pointer rounded bg-sage px-5 py-2 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#4A7A5E] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {activateIsPending
               ? "Confirm in Wallet..."
@@ -504,7 +566,7 @@ export default function AgentDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Revenue Profile */}
-        <div className="card-glass rounded-xl p-5">
+        <div className="card-glass rounded p-5">
           <h2 className="text-sm font-semibold text-[rgb(var(--muted-foreground))]">
             Revenue Profile
           </h2>
@@ -541,7 +603,7 @@ export default function AgentDetailPage() {
         </div>
 
         {/* Agent Balance & Details */}
-        <div className="card-glass rounded-xl p-5 lg:col-span-2">
+        <div className="card-glass rounded p-5 lg:col-span-2">
           <h2 className="text-sm font-semibold text-[rgb(var(--muted-foreground))]">
             On-Chain Details
           </h2>
@@ -576,7 +638,7 @@ export default function AgentDetailPage() {
 
       {/* Fund Agent -- owner only */}
       {isOwner && (
-        <div className="card-glass rounded-xl p-5">
+        <div className="card-glass rounded p-5">
           <h2 className="text-sm font-semibold">Fund Agent</h2>
           <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
             Deposit BNB into this agent&apos;s on-chain balance.
@@ -593,13 +655,13 @@ export default function AgentDetailPage() {
                 value={fundAmount}
                 onChange={(e) => setFundAmount(e.target.value)}
                 placeholder="0.1"
-                className="mt-1 w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
+                className="mt-1 w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
               />
             </div>
             <button
               onClick={handleFund}
               disabled={fundIsPending || fundConfirming || !fundAmount || Number(fundAmount) <= 0}
-              className="cursor-pointer rounded-lg bg-sage px-5 py-2 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#4A7A5E] disabled:cursor-not-allowed disabled:opacity-40"
+              className="cursor-pointer rounded bg-sage px-5 py-2 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#4A7A5E] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {fundIsPending
                 ? "Confirm in Wallet..."
@@ -621,12 +683,12 @@ export default function AgentDetailPage() {
         </div>
       )}
 
-      {/* x402 Simulate Payment -- anyone connected */}
+      {/* b402 Simulate Payment -- anyone connected */}
       {isConnected && (
-        <div className="card-glass rounded-xl p-5">
-          <h2 className="text-sm font-semibold">Simulate x402 Payment</h2>
+        <div className="card-glass rounded p-5">
+          <h2 className="text-sm font-semibold">Simulate b402 Payment</h2>
           <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
-            Send a test x402 payment to this agent. Revenue is split between the agent owner and bondholders.
+            Send a test b402 payment to this agent. Revenue is split between the agent owner and bondholders.
           </p>
           <div className="mt-3 flex items-end gap-3">
             <div className="flex-1">
@@ -640,13 +702,13 @@ export default function AgentDetailPage() {
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
                 placeholder="0.05"
-                className="mt-1 w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
+                className="mt-1 w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
               />
             </div>
             <button
-              onClick={handleX402Payment}
+              onClick={handleB402Payment}
               disabled={paymentIsPending || paymentConfirming || !paymentAmount || Number(paymentAmount) <= 0}
-              className="cursor-pointer rounded-lg bg-gold px-5 py-2 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#C49A48] disabled:cursor-not-allowed disabled:opacity-40"
+              className="cursor-pointer rounded bg-gold px-5 py-2 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#C49A48] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {paymentIsPending
                 ? "Confirm in Wallet..."
@@ -657,7 +719,7 @@ export default function AgentDetailPage() {
           </div>
           {paymentSuccess && (
             <p className="mt-2 text-xs text-sage">
-              x402 payment sent successfully. Revenue profile updated.
+              b402 payment sent successfully. Revenue profile updated.
             </p>
           )}
           {paymentError && (
@@ -669,7 +731,7 @@ export default function AgentDetailPage() {
       )}
 
       {/* Revenue Overview Chart -- real on-chain data */}
-      <div className="card-glass rounded-xl p-5">
+      <div className="card-glass rounded p-5">
         <h2 className="text-sm font-semibold text-[rgb(var(--muted-foreground))]">
           Revenue Overview
         </h2>
@@ -734,8 +796,12 @@ export default function AgentDetailPage() {
       {/* TEE Status */}
       <TEEStatusPanel agentId={BigInt(agentId)} isOwner={isOwner} />
 
+      {/* Data Assets + Compute Rentals */}
+      <DataAssetsSection agentId={Number(id)} />
+      <ComputeRentalsSection agentId={Number(id)} />
+
       {/* Bond Section -- Multi-class v2 */}
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         {agentData.hasBondClasses && bondClasses.length > 0 ? (
           <>
             <h2 className="text-lg font-semibold">Bond Series ({bondClasses.length})</h2>
@@ -751,7 +817,7 @@ export default function AgentDetailPage() {
                   <Link
                     key={bc.classId.toString()}
                     href={`/bonds/${bc.classId.toString()}`}
-                    className="card-glass cursor-pointer rounded-xl p-4 transition-colors duration-200"
+                    className="card-glass cursor-pointer rounded p-4 transition-colors duration-200"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
@@ -812,7 +878,7 @@ export default function AgentDetailPage() {
                   value={couponRate}
                   onChange={(e) => setCouponRate(e.target.value)}
                   placeholder="500 = 5%"
-                  className="mt-1 w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
+                  className="mt-1 w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
                 />
               </div>
               <div>
@@ -824,7 +890,7 @@ export default function AgentDetailPage() {
                   value={maturityDays}
                   onChange={(e) => setMaturityDays(e.target.value)}
                   placeholder="90"
-                  className="mt-1 w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
+                  className="mt-1 w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
                 />
               </div>
               <div>
@@ -837,7 +903,7 @@ export default function AgentDetailPage() {
                   value={pricePerBond}
                   onChange={(e) => setPricePerBond(e.target.value)}
                   placeholder="0.1"
-                  className="mt-1 w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
+                  className="mt-1 w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
                 />
               </div>
               <div>
@@ -849,7 +915,7 @@ export default function AgentDetailPage() {
                   value={maxSupply}
                   onChange={(e) => setMaxSupply(e.target.value)}
                   placeholder="1000"
-                  className="mt-1 w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
+                  className="mt-1 w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
                 />
               </div>
               <div className="sm:col-span-2">
@@ -859,7 +925,7 @@ export default function AgentDetailPage() {
                 <div className="mt-1 flex items-center gap-3">
                   <button
                     onClick={() => setIpoPaymentToken(ZERO_ADDRESS)}
-                    className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+                    className={`cursor-pointer rounded px-4 py-2 text-sm font-medium transition-colors duration-200 ${
                       ipoPaymentToken === ZERO_ADDRESS
                         ? "bg-gold/10 text-gold"
                         : "bg-[rgb(var(--secondary))] text-[rgb(var(--muted-foreground))] hover:text-[rgb(var(--foreground))]"
@@ -872,7 +938,7 @@ export default function AgentDetailPage() {
                     value={ipoPaymentToken === ZERO_ADDRESS ? "" : ipoPaymentToken}
                     onChange={(e) => setIpoPaymentToken(e.target.value || ZERO_ADDRESS)}
                     placeholder="0x... ERC-20 address"
-                    className="flex-1 rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
+                    className="flex-1 rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
                   />
                 </div>
               </div>
@@ -881,7 +947,7 @@ export default function AgentDetailPage() {
               <button
                 onClick={handleIPO}
                 disabled={ipoIsPending || ipoConfirming}
-                className="cursor-pointer rounded-lg bg-gold px-6 py-2.5 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#C49A48] disabled:cursor-not-allowed disabled:opacity-40"
+                className="cursor-pointer rounded bg-gold px-6 py-2.5 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#C49A48] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {ipoIsPending
                   ? "Confirm in Wallet..."

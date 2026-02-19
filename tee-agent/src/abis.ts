@@ -15,9 +15,10 @@ export const SIBControllerV2ABI = [
   "function getAgentBondClasses(uint256 agentId) view returns (uint256[])",
 ] as const;
 
-export const X402ReceiverABI = [
+export const B402ReceiverABI = [
   "function payBNB(uint256 agentId, string calldata endpoint) external payable",
   "function payERC20(uint256 agentId, address token, uint256 amount, string calldata endpoint) external",
+  "function payWithSignature(address payer, uint256 agentId, address token, uint256 amount, string calldata endpoint, uint256 deadline, bytes calldata signature) external",
 ] as const;
 
 export const NFARegistryABI = [

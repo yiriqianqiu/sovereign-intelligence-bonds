@@ -27,24 +27,16 @@ export function useTrancheGroup(groupId: number | undefined) {
 
   const group: TrancheGroup | null = data
     ? (() => {
-        const d = data as unknown as {
-          agentId: bigint;
-          seniorClassId: bigint;
-          juniorClassId: bigint;
-          seniorCouponBps: bigint;
-          juniorCouponBps: bigint;
-          paymentToken: `0x${string}`;
-          exists: boolean;
-        };
+        const d = data as unknown as readonly [bigint, bigint, bigint, bigint, bigint, `0x${string}`, boolean];
         return {
           groupId: groupId!,
-          agentId: Number(d.agentId),
-          seniorClassId: Number(d.seniorClassId),
-          juniorClassId: Number(d.juniorClassId),
-          seniorCouponBps: Number(d.seniorCouponBps),
-          juniorCouponBps: Number(d.juniorCouponBps),
-          paymentToken: d.paymentToken,
-          exists: d.exists,
+          agentId: Number(d[0]),
+          seniorClassId: Number(d[1]),
+          juniorClassId: Number(d[2]),
+          seniorCouponBps: Number(d[3]),
+          juniorCouponBps: Number(d[4]),
+          paymentToken: d[5],
+          exists: d[6],
         };
       })()
     : null;

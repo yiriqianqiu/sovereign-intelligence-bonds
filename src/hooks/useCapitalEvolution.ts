@@ -69,7 +69,7 @@ export function useMilestoneThresholds() {
   });
 
   const thresholds = data
-    ? (data as bigint[]).map((t, i) => ({
+    ? ([...(data as unknown as readonly bigint[])] as bigint[]).map((t, i) => ({
         level: i + 1,
         label: EvolutionLabels[i + 1],
         threshold: formatEther(t),

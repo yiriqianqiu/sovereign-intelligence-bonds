@@ -283,7 +283,7 @@ describe("SIBControllerV2", function () {
   // =================== Revenue Tests ===================
 
   describe("Revenue", function () {
-    it("should receive BNB x402 payment and split 70/30", async function () {
+    it("should receive BNB b402 payment and split 70/30", async function () {
       const { controller, registry, agentOwner, outsider, ethers } = await deployAll();
       const agentId = await registerAndActivate(registry, agentOwner);
       // Need an IPO so agent is active (revenue doesn't require IPO in V2, but agent must be active)
@@ -291,7 +291,7 @@ describe("SIBControllerV2", function () {
 
       const payment = ethers.parseEther("1.0");
       const ownerBalBefore = await ethers.provider.getBalance(agentOwner.address);
-      await controller.connect(outsider).receiveX402PaymentBNB(agentId, { value: payment });
+      await controller.connect(outsider).receiveB402PaymentBNB(agentId, { value: payment });
 
       // 70% to bondholder pool
       assert.equal(await controller.revenuePool(agentId, ethers.ZeroAddress), ethers.parseEther("0.7"));
@@ -300,7 +300,7 @@ describe("SIBControllerV2", function () {
       assert.equal(ownerBalAfter - ownerBalBefore, ethers.parseEther("0.3"));
     });
 
-    it("should receive ERC20 x402 payment and split correctly", async function () {
+    it("should receive ERC20 b402 payment and split correctly", async function () {
       const { controller, registry, mockToken, agentOwner, outsider, ethers } = await deployAll();
       const agentId = await registerAndActivate(registry, agentOwner);
       const tokenAddr = await mockToken.getAddress();
@@ -311,7 +311,7 @@ describe("SIBControllerV2", function () {
       await mockToken.mint(outsider.address, ethers.parseEther("100"));
       await mockToken.connect(outsider).approve(await controller.getAddress(), ethers.parseEther("100"));
 
-      await controller.connect(outsider).receiveX402PaymentERC20(agentId, tokenAddr, ethers.parseEther("10"));
+      await controller.connect(outsider).receiveB402PaymentERC20(agentId, tokenAddr, ethers.parseEther("10"));
 
       // 70% in pool
       assert.equal(await controller.revenuePool(agentId, tokenAddr), ethers.parseEther("7"));
@@ -324,8 +324,8 @@ describe("SIBControllerV2", function () {
       const agentId = await registerAndActivate(registry, agentOwner);
       await controller.connect(agentOwner).initiateIPO(agentId, 500, 86400 * 30, ethers.parseEther("0.01"), 1000, ethers.ZeroAddress);
 
-      await controller.connect(outsider).receiveX402PaymentBNB(agentId, { value: ethers.parseEther("1.0") });
-      await controller.connect(outsider).receiveX402PaymentBNB(agentId, { value: ethers.parseEther("2.0") });
+      await controller.connect(outsider).receiveB402PaymentBNB(agentId, { value: ethers.parseEther("1.0") });
+      await controller.connect(outsider).receiveB402PaymentBNB(agentId, { value: ethers.parseEther("2.0") });
 
       // 0.7 + 1.4 = 2.1
       assert.equal(await controller.revenuePool(agentId, ethers.ZeroAddress), ethers.parseEther("2.1"));
@@ -342,7 +342,7 @@ describe("SIBControllerV2", function () {
       // Purchase bonds so totalSupply > 0 (required by vault)
       await controller.connect(investor1).purchaseBondsBNB(classId, 10, { value: price * 10n });
 
-      await controller.connect(outsider).receiveX402PaymentBNB(agentId, { value: ethers.parseEther("1.0") });
+      await controller.connect(outsider).receiveB402PaymentBNB(agentId, { value: ethers.parseEther("1.0") });
       assert.ok((await controller.revenuePool(agentId, ethers.ZeroAddress)) > 0n);
 
       await controller.connect(agentOwner).distributeDividends(classId, 0);
@@ -371,7 +371,7 @@ describe("SIBControllerV2", function () {
       // Revenue comes in
       await mockToken.mint(outsider.address, ethers.parseEther("100"));
       await mockToken.connect(outsider).approve(await controller.getAddress(), ethers.parseEther("100"));
-      await controller.connect(outsider).receiveX402PaymentERC20(agentId, tokenAddr, ethers.parseEther("10"));
+      await controller.connect(outsider).receiveB402PaymentERC20(agentId, tokenAddr, ethers.parseEther("10"));
 
       assert.equal(await controller.revenuePool(agentId, tokenAddr), ethers.parseEther("7"));
 
@@ -685,7 +685,7 @@ describe("SIBControllerV2", function () {
 
       // Send revenue to boost revenue + frequency factors
       for (let i = 0; i < 5; i++) {
-        await controller.connect(outsider).receiveX402PaymentBNB(agentId, { value: ethers.parseEther("20") });
+        await controller.connect(outsider).receiveB402PaymentBNB(agentId, { value: ethers.parseEther("20") });
       }
 
       const newCoupon = await controller.calculateDynamicCoupon(classId);
@@ -845,7 +845,7 @@ describe("SIBControllerV2", function () {
       const { controller, registry, agentOwner, outsider } = await deployAll();
       const agentId = await registerAndActivate(registry, agentOwner);
       await assert.rejects(
-        async () => controller.connect(outsider).receiveX402PaymentBNB(agentId, { value: 0 }),
+        async () => controller.connect(outsider).receiveB402PaymentBNB(agentId, { value: 0 }),
         /zero payment/
       );
     });
@@ -855,7 +855,7 @@ describe("SIBControllerV2", function () {
       const agentId = await registerAndActivate(registry, agentOwner);
       const tokenAddr = await mockToken.getAddress();
       await assert.rejects(
-        async () => controller.connect(outsider).receiveX402PaymentERC20(agentId, tokenAddr, 0),
+        async () => controller.connect(outsider).receiveB402PaymentERC20(agentId, tokenAddr, 0),
         /zero payment/
       );
     });
@@ -934,7 +934,7 @@ describe("SIBControllerV2", function () {
       const classId = classes[0];
 
       await controller.connect(investor1).purchaseBondsBNB(classId, 10, { value: price * 10n });
-      await controller.connect(outsider).receiveX402PaymentBNB(agentId, { value: ethers.parseEther("1.0") });
+      await controller.connect(outsider).receiveB402PaymentBNB(agentId, { value: ethers.parseEther("1.0") });
 
       // Admin (owner) can also distribute
       await controller.connect(owner).distributeDividends(classId, 0);
@@ -950,7 +950,7 @@ describe("SIBControllerV2", function () {
       const classId = classes[0];
 
       await controller.connect(investor1).purchaseBondsBNB(classId, 10, { value: price * 10n });
-      await controller.connect(outsider).receiveX402PaymentBNB(agentId, { value: ethers.parseEther("1.0") });
+      await controller.connect(outsider).receiveB402PaymentBNB(agentId, { value: ethers.parseEther("1.0") });
 
       await assert.rejects(
         async () => controller.connect(outsider).distributeDividends(classId, 0),

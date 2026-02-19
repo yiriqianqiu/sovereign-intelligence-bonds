@@ -35,10 +35,10 @@ export function useCreditScore(agentId: number | undefined) {
 
   const score: CreditScore | null = data
     ? (() => {
-        const d = data as unknown as { score: bigint; rating: number };
+        const d = data as unknown as readonly [bigint, number];
         return {
-          score: Number(d.score),
-          rating: d.rating,
+          score: Number(d[0]),
+          rating: d[1],
         };
       })()
     : null;
@@ -56,7 +56,7 @@ export function useMonthlyRevenue(agentId: number | undefined) {
   });
 
   const monthly: number[] | null = data
-    ? (data as bigint[]).map((v) => Number(formatEther(v)))
+    ? ([...(data as unknown as readonly bigint[])]).map((v) => Number(formatEther(v)))
     : null;
 
   return { data: monthly, isLoading, error, refetch };
@@ -73,19 +73,13 @@ export function useCreditFactors(agentId: number | undefined) {
 
   const factors: CreditFactors | null = data
     ? (() => {
-        const d = data as unknown as {
-          sharpeRatio: bigint;
-          revenueStability: bigint;
-          paymentFrequency: bigint;
-          agentAge: bigint;
-          totalRevenue: bigint;
-        };
+        const d = data as unknown as readonly [bigint, bigint, bigint, bigint, bigint];
         return {
-          sharpeRatio: formatEther(d.sharpeRatio),
-          revenueStability: formatEther(d.revenueStability),
-          paymentFrequency: formatEther(d.paymentFrequency),
-          agentAge: formatEther(d.agentAge),
-          totalRevenue: formatEther(d.totalRevenue),
+          sharpeRatio: formatEther(d[0]),
+          revenueStability: formatEther(d[1]),
+          paymentFrequency: formatEther(d[2]),
+          agentAge: formatEther(d[3]),
+          totalRevenue: formatEther(d[4]),
         };
       })()
     : null;

@@ -41,28 +41,18 @@ export function useProposal(proposalId: number | undefined) {
 
   const proposal: Proposal | null = data
     ? (() => {
-        const d = data as unknown as {
-          classId: bigint;
-          proposalType: number;
-          newValue: bigint;
-          forVotes: bigint;
-          againstVotes: bigint;
-          startTime: bigint;
-          endTime: bigint;
-          state: number;
-          proposer: `0x${string}`;
-        };
+        const d = data as unknown as readonly [bigint, number, bigint, bigint, bigint, bigint, bigint, number, `0x${string}`];
         return {
           proposalId: proposalId!,
-          classId: Number(d.classId),
-          proposalType: d.proposalType,
-          newValue: Number(d.newValue),
-          forVotes: Number(d.forVotes),
-          againstVotes: Number(d.againstVotes),
-          startTime: Number(d.startTime),
-          endTime: Number(d.endTime),
-          state: d.state,
-          proposer: d.proposer,
+          classId: Number(d[0]),
+          proposalType: d[1],
+          newValue: Number(d[2]),
+          forVotes: Number(d[3]),
+          againstVotes: Number(d[4]),
+          startTime: Number(d[5]),
+          endTime: Number(d[6]),
+          state: d[7],
+          proposer: d[8],
         };
       })()
     : null;

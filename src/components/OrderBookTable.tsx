@@ -37,14 +37,14 @@ export function OrderBookTable({ classId, nonceId }: OrderBookTableProps) {
 
   if (isLoading) {
     return (
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <p className="text-sm text-[rgb(var(--muted-foreground))]">Loading order book...</p>
       </div>
     );
   }
 
   return (
-    <div className="card-glass rounded-xl p-6">
+    <div className="card-glass rounded p-6">
       <h3 className="mb-4 text-base font-semibold">
         Order Book
         <span className="ml-2 text-xs text-[rgb(var(--muted-foreground))]">

@@ -6,7 +6,7 @@ import { useReadContract } from "wagmi";
 import { parseAbi, createPublicClient, http, formatEther } from "viem";
 import { bscTestnet } from "viem/chains";
 import { ADDRESSES } from "@/lib/contract-addresses";
-import { NFARegistryABI, X402PaymentReceiverABI, SIBControllerV2ABI } from "@/lib/contracts";
+import { NFARegistryABI, B402PaymentReceiverABI, SIBControllerV2ABI } from "@/lib/contracts";
 
 const client = createPublicClient({ chain: bscTestnet, transport: http() });
 
@@ -27,41 +27,36 @@ const STEPS = [
     number: "03",
     title: "Earn Dividends",
     description:
-      "Bond holders receive automated dividend distributions via x402 payment channels. Revenue flows are cryptographically verified before each payout.",
+      "Bond holders receive automated dividend distributions via b402 payment channels. Revenue flows are cryptographically verified before each payout.",
   },
 ];
 
 export default function Home() {
-  const [tvl, setTvl] = useState<string>("...");
-  const [activeBonds, setActiveBonds] = useState<string>("...");
+  const [tvl, setTvl] = useState<string>("--");
+  const [activeBonds, setActiveBonds] = useState<string>("--");
   const [statsLoading, setStatsLoading] = useState(true);
 
-  // Read real agent count from chain
   const { data: agentCount, isLoading: agentCountLoading } = useReadContract({
     address: ADDRESSES.NFARegistry as `0x${string}`,
     abi: parseAbi(NFARegistryABI),
     functionName: "totalSupply",
   });
 
-  // Read real payment count from chain
   const { data: paymentCount } = useReadContract({
-    address: ADDRESSES.X402PaymentReceiverV2 as `0x${string}`,
-    abi: parseAbi(X402PaymentReceiverABI),
+    address: ADDRESSES.B402PaymentReceiver as `0x${string}`,
+    abi: parseAbi(B402PaymentReceiverABI),
     functionName: "getPaymentCount",
   });
 
-  // Fetch TVL (DividendVault balance) and active bond count
   useEffect(() => {
     async function fetchStats() {
       try {
-        // TVL: BNB balance of DividendVault
         const vaultBalance = await client.getBalance({
           address: ADDRESSES.DividendVaultV2 as `0x${string}`,
         });
         const tvlBnb = parseFloat(formatEther(vaultBalance));
         setTvl(`${tvlBnb.toFixed(4)} BNB`);
 
-        // Active Bonds: iterate agents and count those with hasIPO
         if (agentCount !== undefined && Number(agentCount) > 0) {
           const count = Number(agentCount);
           let bondCount = 0;
@@ -84,7 +79,7 @@ export default function Home() {
               // skip
             }
           }
-          setActiveBonds(bondCount.toLocaleString());
+          setActiveBonds(String(bondCount));
         } else {
           setActiveBonds("0");
         }
@@ -99,115 +94,99 @@ export default function Home() {
     fetchStats();
   }, [agentCount]);
 
-  const heroStats = [
-    {
-      label: "Total Value Locked",
-      value: statsLoading ? "..." : tvl,
-      subtext: "On-Chain",
-    },
-    {
-      label: "Active Bonds",
-      value: statsLoading ? "..." : activeBonds,
-      subtext: "On-Chain",
-    },
-    {
-      label: "Registered Agents",
-      value: agentCountLoading
-        ? "..."
-        : agentCount !== undefined
-        ? Number(agentCount).toLocaleString()
-        : "0",
-      subtext: "On-Chain",
-    },
-  ];
-
   return (
-    <div className="space-y-20 py-8">
+    <div className="space-y-16 py-8">
       {/* Hero */}
-      <section className="space-y-8 text-center">
-        <div className="space-y-4">
-          <p className="text-sm font-medium uppercase tracking-widest text-gold">
-            Sovereign Intelligence Bonds
-          </p>
-          <h1 className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+      <section className="space-y-6">
+        <div className="space-y-3">
+          <p className="label-mono">sovereign intelligence bonds</p>
+          <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
             Agent Wall Street
           </h1>
-          <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+          <p className="max-w-xl text-sm text-muted-foreground leading-relaxed">
             Securitize AI agent revenue streams into tradable bond instruments.
             Verifiable credit ratings powered by zkML. Automated dividends via
-            x402 payment channels.
+            b402 payment channels.
           </p>
         </div>
 
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center gap-3">
           <Link
             href="/agents"
-            className="cursor-pointer rounded-lg bg-gold px-6 py-3 text-sm font-semibold text-background transition-colors duration-200 hover:bg-gold/90"
+            className="cursor-pointer rounded bg-gold px-5 py-2 text-xs font-semibold text-background transition-colors duration-150 hover:bg-gold/85"
           >
-            Explore Agents
+            explore agents
           </Link>
           <Link
             href="/bonds"
-            className="cursor-pointer rounded-lg border border-gold/30 px-6 py-3 text-sm font-semibold text-gold transition-colors duration-200 hover:border-gold/60 hover:bg-gold/5"
+            className="cursor-pointer rounded border border-border px-5 py-2 text-xs font-semibold text-foreground transition-colors duration-150 hover:border-gold/40 hover:text-gold"
           >
-            View Bonds
+            view bonds
           </Link>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="grid gap-6 sm:grid-cols-3">
-        {heroStats.map((stat) => (
-          <div
-            key={stat.label}
-            className="card-glass glow-gold rounded-xl p-6 transition-colors duration-200"
-          >
-            <p className="text-sm text-muted-foreground">{stat.label}</p>
-            <p className="stat-value mt-2 text-3xl text-foreground">
+      {/* Stats Grid */}
+      <section className="grid gap-px overflow-hidden rounded border bg-border sm:grid-cols-3">
+        {[
+          {
+            label: "tvl",
+            value: statsLoading ? "--" : tvl,
+          },
+          {
+            label: "active bonds",
+            value: statsLoading ? "--" : activeBonds,
+          },
+          {
+            label: "registered agents",
+            value: agentCountLoading
+              ? "--"
+              : agentCount !== undefined
+              ? String(Number(agentCount))
+              : "0",
+          },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-card p-5">
+            <p className="label-mono">{stat.label}</p>
+            <p className="mt-2 font-mono text-2xl font-medium tracking-tight text-foreground">
               {stat.value}
-            </p>
-            <p className="mt-1 font-mono text-xs text-muted-foreground">
-              {stat.subtext}
             </p>
           </div>
         ))}
       </section>
 
-      {/* Protocol Stats */}
+      {/* b402 Payment Count */}
       {paymentCount !== undefined && Number(paymentCount) > 0 && (
-        <section className="card-glass rounded-xl p-6">
+        <section className="rounded border bg-card p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">x402 Payments Processed</p>
-              <p className="stat-value mt-1 text-2xl text-foreground font-mono">
+              <p className="label-mono">b402 payments processed</p>
+              <p className="mt-1 font-mono text-xl font-medium text-foreground">
                 {Number(paymentCount).toLocaleString()}
               </p>
             </div>
-            <p className="text-xs text-muted-foreground">On-Chain</p>
+            <span className="label-mono">on-chain</span>
           </div>
         </section>
       )}
 
       {/* How It Works */}
-      <section className="space-y-10">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold sm:text-3xl">How It Works</h2>
-          <p className="mt-2 text-muted-foreground">
-            Three steps from agent registration to automated revenue distribution
+      <section className="space-y-8">
+        <div>
+          <h2 className="font-heading text-xl font-bold tracking-tight sm:text-2xl">How It Works</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Three steps from agent registration to automated revenue distribution.
           </p>
         </div>
 
-        <div className="grid gap-8 sm:grid-cols-3">
+        <div className="grid gap-px overflow-hidden rounded border bg-border sm:grid-cols-3">
           {STEPS.map((step) => (
-            <div
-              key={step.number}
-              className="card-glass rounded-xl p-6 transition-colors duration-200"
-            >
-              <span className="stat-value text-3xl text-gold/40">
+            <div key={step.number} className="bg-card p-5">
+              <span className="font-mono text-2xl font-light text-gold/30">
                 {step.number}
               </span>
-              <h3 className="mt-4 text-lg font-semibold">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              <h3 className="mt-3 font-heading text-sm font-semibold">{step.title}</h3>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
                 {step.description}
               </p>
             </div>
@@ -216,25 +195,27 @@ export default function Home() {
       </section>
 
       {/* Bottom CTA */}
-      <section className="card-glass glow-gold rounded-xl p-10 text-center">
-        <h2 className="text-2xl font-bold">Start Building on Agent Wall Street</h2>
-        <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+      <section className="rounded border bg-card p-8">
+        <h2 className="font-heading text-lg font-bold tracking-tight">
+          Start Building on Agent Wall Street
+        </h2>
+        <p className="mt-2 max-w-lg text-xs text-muted-foreground leading-relaxed">
           Register your AI agents, create bond classes backed by verifiable
           revenue streams, and tap into the first decentralized market for
           machine credit.
         </p>
-        <div className="mt-6 flex items-center justify-center gap-4">
+        <div className="mt-5 flex items-center gap-3">
           <Link
             href="/agents"
-            className="cursor-pointer rounded-lg bg-gold px-6 py-3 text-sm font-semibold text-background transition-colors duration-200 hover:bg-gold/90"
+            className="cursor-pointer rounded bg-gold px-5 py-2 text-xs font-semibold text-background transition-colors duration-150 hover:bg-gold/85"
           >
-            Register Agent
+            register agent
           </Link>
           <Link
             href="/dashboard"
-            className="cursor-pointer rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground transition-colors duration-200 hover:border-gold/30 hover:text-gold"
+            className="cursor-pointer rounded border border-border px-5 py-2 text-xs font-semibold text-foreground transition-colors duration-150 hover:border-gold/40 hover:text-gold"
           >
-            View Dashboard
+            view dashboard
           </Link>
         </div>
       </section>

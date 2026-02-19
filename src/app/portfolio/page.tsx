@@ -9,6 +9,7 @@ import { bscTestnet } from "viem/chains";
 import { NFARegistryABI, SIBControllerV2ABI, SIBBondManagerABI, DividendVaultV2ABI } from "@/lib/contracts";
 import { ADDRESSES } from "@/lib/contract-addresses";
 import { DividendClaimButton } from "@/components/DividendClaimButton";
+import { useCollateralBalance } from "@/hooks/useBondCollateral";
 
 const client = createPublicClient({ chain: bscTestnet, transport: http() });
 
@@ -76,32 +77,15 @@ export default function PortfolioPage() {
 
           if (!hasIPO) continue;
 
-          const classIdBig = await client.readContract({
+          // v2: get all bond class IDs for this agent
+          const classIds = await client.readContract({
             address: ADDRESSES.SIBControllerV2 as `0x${string}`,
             abi: SIBControllerV2ABI,
-            functionName: "agentBondClass",
+            functionName: "getAgentBondClasses",
             args: [agentId],
-          });
-          const classId = Number(classIdBig);
+          }) as bigint[];
 
-          // Read bond class info
-          const bondClass = await client.readContract({
-            address: ADDRESSES.SIBBondManager as `0x${string}`,
-            abi: SIBBondManagerABI,
-            functionName: "bondClasses",
-            args: [classIdBig],
-          });
-          const [, couponRateBps, , , , bcExists] = bondClass as [bigint, bigint, bigint, bigint, bigint, boolean];
-          if (!bcExists) continue;
-
-          // Get number of nonces
-          const nextNonce = await client.readContract({
-            address: ADDRESSES.SIBBondManager as `0x${string}`,
-            abi: SIBBondManagerABI,
-            functionName: "nextNonceId",
-            args: [classIdBig],
-          });
-          const nonceCount = Number(nextNonce);
+          if (!classIds || classIds.length === 0) continue;
 
           // Get agent name
           let agentName = `Agent #${Number(agentId)}`;
@@ -112,51 +96,73 @@ export default function PortfolioPage() {
               functionName: "getAgentMetadata",
               args: [agentId],
             });
-            const metaTuple = metadata as { name: string };
-            if (metaTuple.name) agentName = metaTuple.name;
+            const metaTuple = metadata as unknown as readonly [string, string, string, string, bigint];
+            if (metaTuple[0]) agentName = metaTuple[0];
           } catch {
             // Keep default
           }
 
-          // Check each nonce for user balance
-          for (let n = 0; n < nonceCount; n++) {
-            const balance = await client.readContract({
+          for (const classIdBig of classIds) {
+            const classId = Number(classIdBig);
+
+            // Read bond class info (v1 ABI: 6 values; d[1]=couponRateBps)
+            const bondClass = await client.readContract({
               address: ADDRESSES.SIBBondManager as `0x${string}`,
               abi: SIBBondManagerABI,
-              functionName: "balanceOf",
-              args: [userAddress as `0x${string}`, classIdBig, BigInt(n)],
+              functionName: "bondClasses",
+              args: [classIdBig],
             });
+            const [, couponRateBps] = bondClass as [bigint, bigint, bigint, bigint, bigint, boolean];
 
-            if (Number(balance) === 0) continue;
-
-            // Read nonce data
-            const nonceData = await client.readContract({
+            // Get number of nonces
+            const nextNonce = await client.readContract({
               address: ADDRESSES.SIBBondManager as `0x${string}`,
               abi: SIBBondManagerABI,
-              functionName: "bondNonces",
-              args: [classIdBig, BigInt(n)],
+              functionName: "nextNonceId",
+              args: [classIdBig],
             });
-            const [, maturityTimestamp, , pricePerBond, redeemable] = nonceData as [bigint, bigint, bigint, bigint, boolean, boolean];
+            const nonceCount = Number(nextNonce);
 
-            // Read claimable dividends
-            const claimable = await client.readContract({
-              address: ADDRESSES.DividendVaultV2 as `0x${string}`,
-              abi: DividendVaultV2ABI,
-              functionName: "claimable",
-              args: [userAddress as `0x${string}`, classIdBig, BigInt(n), "0x0000000000000000000000000000000000000000" as `0x${string}`],
-            });
+            // Check each nonce for user balance
+            for (let n = 0; n < nonceCount; n++) {
+              const balance = await client.readContract({
+                address: ADDRESSES.SIBBondManager as `0x${string}`,
+                abi: SIBBondManagerABI,
+                functionName: "balanceOf",
+                args: [userAddress as `0x${string}`, classIdBig, BigInt(n)],
+              });
 
-            found.push({
-              classId,
-              nonceId: n,
-              agentName,
-              balance: Number(balance),
-              pricePerBond,
-              couponRateBps: Number(couponRateBps),
-              claimable: claimable as bigint,
-              maturityTimestamp: Number(maturityTimestamp),
-              redeemable,
-            });
+              if (Number(balance) === 0) continue;
+
+              // Read nonce data
+              const nonceData = await client.readContract({
+                address: ADDRESSES.SIBBondManager as `0x${string}`,
+                abi: SIBBondManagerABI,
+                functionName: "bondNonces",
+                args: [classIdBig, BigInt(n)],
+              });
+              const [, maturityTimestamp, , pricePerBond, redeemable] = nonceData as [bigint, bigint, bigint, bigint, boolean, boolean];
+
+              // Read claimable dividends
+              const claimable = await client.readContract({
+                address: ADDRESSES.DividendVaultV2 as `0x${string}`,
+                abi: DividendVaultV2ABI,
+                functionName: "claimable",
+                args: [userAddress as `0x${string}`, classIdBig, BigInt(n), "0x0000000000000000000000000000000000000000" as `0x${string}`],
+              });
+
+              found.push({
+                classId,
+                nonceId: n,
+                agentName,
+                balance: Number(balance),
+                pricePerBond,
+                couponRateBps: Number(couponRateBps),
+                claimable: claimable as bigint,
+                maturityTimestamp: Number(maturityTimestamp),
+                redeemable,
+              });
+            }
           }
         }
 
@@ -197,15 +203,15 @@ export default function PortfolioPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">My Portfolio</h1>
-          <p className="mt-1 text-sm text-[rgb(var(--muted-foreground))]">
+          <h1 className="font-heading text-xl font-bold tracking-tight">My Portfolio</h1>
+          <p className="mt-1 text-xs text-muted-foreground">
             Manage your bond holdings, claim dividends, and redeem mature positions.
           </p>
         </div>
         <div className="flex min-h-[40vh] items-center justify-center">
           <div className="text-center">
             <p className="text-lg font-semibold">Connect Wallet</p>
-            <p className="mt-2 text-sm text-[rgb(var(--muted-foreground))]">
+            <p className="mt-2 text-xs text-muted-foreground">
               Connect your wallet to view your portfolio.
             </p>
           </div>
@@ -236,32 +242,32 @@ export default function PortfolioPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">My Portfolio</h1>
-        <p className="mt-1 text-sm text-[rgb(var(--muted-foreground))]">
+        <h1 className="font-heading text-xl font-bold tracking-tight">My Portfolio</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
           Manage your bond holdings, claim dividends, and redeem mature positions.
         </p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="card-glass rounded-lg p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-[rgb(var(--muted-foreground))]">
+        <div className="card-glass rounded p-5">
+          <p className="label-mono">
             Total Positions
           </p>
           <p className="mt-2 stat-value font-mono text-2xl text-gold">
             {positions.length}
           </p>
         </div>
-        <div className="card-glass rounded-lg p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-[rgb(var(--muted-foreground))]">
+        <div className="card-glass rounded p-5">
+          <p className="label-mono">
             Holdings Value
           </p>
           <p className="mt-2 stat-value font-mono text-2xl">
             {parseFloat(formatEther(totalHoldingsValueWei)).toFixed(4)} BNB
           </p>
         </div>
-        <div className="card-glass glow-gold rounded-lg p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-[rgb(var(--muted-foreground))]">
+        <div className="card-glass rounded p-5">
+          <p className="label-mono">
             Claimable Dividends
           </p>
           <p className="mt-2 stat-value font-mono text-2xl text-sage">
@@ -271,7 +277,7 @@ export default function PortfolioPage() {
       </div>
 
       {/* Holdings Table */}
-      <div className="card-glass overflow-hidden rounded-lg">
+      <div className="card-glass overflow-hidden rounded">
         <div className="border-b border-[rgb(var(--border))]/50 px-5 py-4">
           <h2 className="text-lg font-semibold">Holdings</h2>
         </div>
@@ -369,7 +375,7 @@ export default function PortfolioPage() {
                           <button
                             onClick={() => handleRedeem(pos.classId, pos.nonceId, pos.balance)}
                             disabled={isRedeemingThis}
-                            className="cursor-pointer rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-4 py-2 text-xs font-medium text-[rgb(var(--foreground))] transition-colors duration-200 hover:bg-[rgb(var(--secondary))]/80 disabled:opacity-50"
+                            className="cursor-pointer rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-4 py-2 text-xs font-medium text-[rgb(var(--foreground))] transition-colors duration-200 hover:bg-[rgb(var(--secondary))]/80 disabled:opacity-50"
                           >
                             {isRedeemingThis ? "Redeeming..." : "Redeem"}
                           </button>
@@ -395,9 +401,36 @@ export default function PortfolioPage() {
 
       {/* Transaction feedback */}
       {redeemSuccess && (
-        <div className="rounded-lg bg-[#5A8A6E]/10 px-4 py-3 text-center text-sm text-sage">
+        <div className="rounded bg-[#5A8A6E]/10 px-4 py-3 text-center text-sm text-sage">
           Bonds redeemed successfully.
         </div>
+      )}
+
+      {/* Wrapped Collateral */}
+      <WrappedCollateralSection address={userAddress as `0x${string}`} />
+    </div>
+  );
+}
+
+function WrappedCollateralSection({ address }: { address: `0x${string}` }) {
+  const { data: balance, isLoading } = useCollateralBalance(address);
+
+  if (isLoading) return null;
+
+  return (
+    <div className="card-glass rounded p-5">
+      <h2 className="text-lg font-semibold">Wrapped Collateral (ERC-721)</h2>
+      <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
+        Bond positions wrapped as ERC-721 tokens via BondCollateralWrapper for use as collateral in DeFi.
+      </p>
+      <div className="mt-4">
+        <p className="label-mono">Wrapped Positions</p>
+        <p className="stat-value font-mono text-2xl text-gold">{balance ?? 0}</p>
+      </div>
+      {(balance === undefined || balance === 0) && (
+        <p className="mt-3 text-xs text-[rgb(var(--muted-foreground))]">
+          No wrapped positions. Wrap your bonds in the bond detail page to use them as collateral.
+        </p>
       )}
     </div>
   );

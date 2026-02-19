@@ -148,8 +148,8 @@ export default function BondDetailPage() {
             functionName: "getAgentMetadata",
             args: [bcAgentId],
           });
-          const metaTuple = metadata as { name: string };
-          if (metaTuple.name) setAgentName(metaTuple.name);
+          const metaTuple = metadata as unknown as readonly [string, string, string, string, bigint];
+          if (metaTuple[0]) setAgentName(metaTuple[0]);
           else setAgentName(`Agent #${Number(bcAgentId)}`);
         } catch {
           setAgentName(`Agent #${Number(bcAgentId)}`);
@@ -243,7 +243,7 @@ export default function BondDetailPage() {
       </div>
 
       {/* Bond Class Header */}
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -263,7 +263,7 @@ export default function BondDetailPage() {
                 <span className="rounded-md bg-[#B87333]/10 px-2 py-0.5 text-xs font-medium" style={{color: '#B87333'}}>ERC-20</span>
               )}
             </div>
-            <h1 className="mt-1 text-2xl font-bold">{agentName || `Agent #${Number(bcAgentId)}`}</h1>
+            <h1 className="mt-1 font-heading text-xl font-bold tracking-tight">{agentName || `Agent #${Number(bcAgentId)}`}</h1>
             <div className="mt-1 flex items-center gap-3">
               <Link
                 href={`/agents/${Number(bcAgentId)}`}
@@ -282,7 +282,7 @@ export default function BondDetailPage() {
             </div>
           </div>
           <div className="flex flex-col items-end gap-1 self-start">
-            <span className="rounded-lg bg-[#D4A853]/10 px-4 py-2 text-lg font-bold text-gold">
+            <span className="rounded bg-[#D4A853]/10 px-4 py-2 text-lg font-bold text-gold">
               {couponPct}% APY
             </span>
             {dynamicCouponPct !== null && dynamicCouponPct !== couponPct && (
@@ -323,17 +323,17 @@ export default function BondDetailPage() {
 
       {/* Dynamic Coupon Section */}
       {dynamicCoupon !== null && (
-        <div className="card-glass rounded-xl p-5">
+        <div className="card-glass rounded p-5">
           <h2 className="text-lg font-semibold">Dynamic Coupon Rate</h2>
           <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
             Coupon rate adjusted by the agent&apos;s real-time performance metrics.
           </p>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-lg bg-[rgb(var(--secondary))] p-4">
+            <div className="rounded bg-[rgb(var(--secondary))] p-4">
               <p className="text-xs text-[rgb(var(--muted-foreground))]">Base Coupon</p>
               <p className="stat-value font-mono text-xl">{couponPct}%</p>
             </div>
-            <div className="rounded-lg bg-[rgb(var(--secondary))] p-4">
+            <div className="rounded bg-[rgb(var(--secondary))] p-4">
               <p className="text-xs text-[rgb(var(--muted-foreground))]">Dynamic Coupon</p>
               <p className="stat-value font-mono text-xl text-sage">{dynamicCouponPct}%</p>
             </div>
@@ -343,21 +343,21 @@ export default function BondDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Purchase Section */}
-        <div className="card-glass rounded-xl p-5">
+        <div className="card-glass rounded p-5">
           <h2 className="text-lg font-semibold">Purchase Bonds</h2>
           <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
             Price: {priceDisplay} {priceUnit} per bond
           </p>
           <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between rounded-lg bg-[rgb(var(--secondary))] px-3 py-2">
+            <div className="flex items-center justify-between rounded bg-[rgb(var(--secondary))] px-3 py-2">
               <span className="text-xs text-[rgb(var(--muted-foreground))]">Available</span>
               <span className="stat-value font-mono text-sm">{remaining.toLocaleString()} bonds</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-[rgb(var(--secondary))] px-3 py-2">
+            <div className="flex items-center justify-between rounded bg-[rgb(var(--secondary))] px-3 py-2">
               <span className="text-xs text-[rgb(var(--muted-foreground))]">Price Per Bond</span>
               <span className="stat-value font-mono text-sm text-gold">{priceDisplay} {priceUnit}</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-[rgb(var(--secondary))] px-3 py-2">
+            <div className="flex items-center justify-between rounded bg-[rgb(var(--secondary))] px-3 py-2">
               <span className="text-xs text-[rgb(var(--muted-foreground))]">Tranche</span>
               <span className="stat-value font-mono text-sm">{TRANCHE_LABELS[tranche]}</span>
             </div>
@@ -370,7 +370,7 @@ export default function BondDetailPage() {
               <button
                 onClick={() => setPurchaseModalOpen(true)}
                 disabled={remaining <= 0}
-                className="w-full cursor-pointer rounded-lg bg-gold py-2.5 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#C49A48] disabled:cursor-not-allowed disabled:opacity-40"
+                className="w-full cursor-pointer rounded bg-gold py-2.5 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#C49A48] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Buy Bonds
               </button>
@@ -378,7 +378,7 @@ export default function BondDetailPage() {
 
             <Link
               href="/market"
-              className="flex cursor-pointer items-center justify-center rounded-lg border border-gold/30 py-2 text-xs font-semibold text-gold transition-colors duration-200 hover:border-gold/60 hover:bg-gold/5"
+              className="flex cursor-pointer items-center justify-center rounded border border-gold/30 py-2 text-xs font-semibold text-gold transition-colors duration-200 hover:border-gold/60 hover:bg-gold/5"
             >
               Trade on DEX
             </Link>
@@ -398,21 +398,21 @@ export default function BondDetailPage() {
         </div>
 
         {/* Dividend Info */}
-        <div className="card-glass rounded-xl p-5 lg:col-span-2">
+        <div className="card-glass rounded p-5 lg:col-span-2">
           <h2 className="text-lg font-semibold">Dividend Information</h2>
           <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
             Dividends are distributed from the agent&apos;s revenue pool.
           </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-lg bg-[rgb(var(--secondary))] p-4">
+            <div className="rounded bg-[rgb(var(--secondary))] p-4">
               <p className="text-xs text-[rgb(var(--muted-foreground))]">Accumulated Per Bond</p>
               <p className="stat-value font-mono text-xl text-gold">{accDividend.toFixed(6)} {isBNB ? "BNB" : "tokens"}</p>
             </div>
-            <div className="rounded-lg bg-[rgb(var(--secondary))] p-4">
+            <div className="rounded bg-[rgb(var(--secondary))] p-4">
               <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Deposited</p>
               <p className="stat-value font-mono text-xl">{totalDeposited.toFixed(4)} {isBNB ? "BNB" : "tokens"}</p>
             </div>
-            <div className="rounded-lg bg-[rgb(var(--secondary))] p-4">
+            <div className="rounded bg-[rgb(var(--secondary))] p-4">
               <p className="text-xs text-[rgb(var(--muted-foreground))]">Revenue Pool</p>
               <p className="stat-value font-mono text-xl">{revenuePool.toFixed(4)} BNB</p>
             </div>
@@ -430,7 +430,7 @@ export default function BondDetailPage() {
                   })
                 }
                 disabled={distributeIsPending || distributeIsConfirming}
-                className="w-full cursor-pointer rounded-lg border border-gold/30 py-2.5 text-sm font-semibold text-gold transition-colors duration-200 hover:border-gold/60 hover:bg-gold/5 disabled:cursor-not-allowed disabled:opacity-40"
+                className="w-full cursor-pointer rounded border border-gold/30 py-2.5 text-sm font-semibold text-gold transition-colors duration-200 hover:border-gold/60 hover:bg-gold/5 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {distributeIsPending
                   ? "Confirm in Wallet..."
@@ -449,7 +449,7 @@ export default function BondDetailPage() {
       </div>
 
       {/* Nonce List */}
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <h2 className="text-lg font-semibold">Bond Nonces</h2>
         <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
           Each nonce represents a batch of bonds issued at a specific time.

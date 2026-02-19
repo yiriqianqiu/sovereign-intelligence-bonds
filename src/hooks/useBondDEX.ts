@@ -44,28 +44,18 @@ export function useOrder(orderId: number | undefined) {
 
   const order: Order | null = data
     ? (() => {
-        const d = data as unknown as {
-          maker: `0x${string}`;
-          classId: bigint;
-          nonceId: bigint;
-          amount: bigint;
-          pricePerBond: bigint;
-          paymentToken: `0x${string}`;
-          isSell: boolean;
-          expiry: bigint;
-          active: boolean;
-        };
+        const d = data as unknown as readonly [`0x${string}`, bigint, bigint, bigint, bigint, `0x${string}`, boolean, bigint, boolean];
         return {
           orderId: orderId!,
-          maker: d.maker,
-          classId: Number(d.classId),
-          nonceId: Number(d.nonceId),
-          amount: Number(d.amount),
-          pricePerBond: formatEther(d.pricePerBond),
-          paymentToken: d.paymentToken,
-          isSell: d.isSell,
-          expiry: Number(d.expiry),
-          active: d.active,
+          maker: d[0],
+          classId: Number(d[1]),
+          nonceId: Number(d[2]),
+          amount: Number(d[3]),
+          pricePerBond: formatEther(d[4]),
+          paymentToken: d[5],
+          isSell: d[6],
+          expiry: Number(d[7]),
+          active: d[8],
         };
       })()
     : null;

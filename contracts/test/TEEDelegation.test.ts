@@ -39,13 +39,13 @@ describe("TEEDelegation", function () {
     // Set TEERegistry on controller
     await controller.setTEERegistry(await teeRegistry.getAddress());
 
-    // Deploy X402PaymentReceiverV2
-    const x402 = await (await ethers.getContractFactory("X402PaymentReceiverV2")).deploy();
-    await x402.setController(controllerAddr);
+    // Deploy B402PaymentReceiver
+    const b402 = await (await ethers.getContractFactory("B402PaymentReceiver")).deploy();
+    await b402.setController(controllerAddr);
 
     return {
       registry, bondManager, vault, mockVerifier, tokenRegistry,
-      controller, teeRegistry, x402, ethers, connection,
+      controller, teeRegistry, b402, ethers, connection,
       owner, agentOwner, teeWallet, investor1, outsider
     };
   }
@@ -110,7 +110,7 @@ describe("TEEDelegation", function () {
       await controller.connect(investor1).purchaseBondsBNB(classId, 10, { value: price * 10n });
 
       // Send revenue
-      await controller.connect(outsider).receiveX402PaymentBNB(agentId, { value: ethers.parseEther("1.0") });
+      await controller.connect(outsider).receiveB402PaymentBNB(agentId, { value: ethers.parseEther("1.0") });
       assert.ok((await controller.revenuePool(agentId, ethers.ZeroAddress)) > 0n);
 
       // TEE distributes
@@ -270,69 +270,69 @@ describe("TEEDelegation", function () {
     });
   });
 
-  // =================== X402V2 Relay Restriction ===================
+  // =================== B402 Relay Restriction ===================
 
-  describe("X402V2 relay restriction", function () {
+  describe("B402 relay restriction", function () {
     it("should allow anyone when relayRestricted=false", async function () {
-      const { x402, registry, controller, agentOwner, outsider, ethers } = await deployAll();
+      const { b402, registry, controller, agentOwner, outsider, ethers } = await deployAll();
       const agentId = await registerAndActivate(registry, agentOwner);
 
       // relayRestricted defaults to false
-      assert.equal(await x402.relayRestricted(), false);
+      assert.equal(await b402.relayRestricted(), false);
 
-      // Setup IPO so receiveX402PaymentBNB works
+      // Setup IPO so receiveB402PaymentBNB works
       await controller.connect(agentOwner).initiateIPO(agentId, 500, 86400 * 30, ethers.parseEther("0.01"), 1000, ethers.ZeroAddress);
 
       // Anyone can call payBNB
-      await x402.connect(outsider).payBNB(agentId, "/api/test", { value: ethers.parseEther("0.1") });
-      assert.equal(await x402.getPaymentCount(), 1n);
+      await b402.connect(outsider).payBNB(agentId, "/api/test", { value: ethers.parseEther("0.1") });
+      assert.equal(await b402.getPaymentCount(), 1n);
     });
 
     it("should block unauthorized relay when relayRestricted=true", async function () {
-      const { x402, registry, controller, agentOwner, outsider, ethers } = await deployAll();
+      const { b402, registry, controller, agentOwner, outsider, ethers } = await deployAll();
       const agentId = await registerAndActivate(registry, agentOwner);
       await controller.connect(agentOwner).initiateIPO(agentId, 500, 86400 * 30, ethers.parseEther("0.01"), 1000, ethers.ZeroAddress);
 
-      await x402.setRelayRestricted(true);
+      await b402.setRelayRestricted(true);
 
       await assert.rejects(
-        async () => x402.connect(outsider).payBNB(agentId, "/api/test", { value: ethers.parseEther("0.1") }),
+        async () => b402.connect(outsider).payBNB(agentId, "/api/test", { value: ethers.parseEther("0.1") }),
         /unauthorized relay/
       );
     });
 
     it("should allow authorized relay when relayRestricted=true", async function () {
-      const { x402, registry, controller, agentOwner, teeWallet, ethers } = await deployAll();
+      const { b402, registry, controller, agentOwner, teeWallet, ethers } = await deployAll();
       const agentId = await registerAndActivate(registry, agentOwner);
       await controller.connect(agentOwner).initiateIPO(agentId, 500, 86400 * 30, ethers.parseEther("0.01"), 1000, ethers.ZeroAddress);
 
-      await x402.setRelayRestricted(true);
-      await x402.setAuthorizedRelay(teeWallet.address, true);
+      await b402.setRelayRestricted(true);
+      await b402.setAuthorizedRelay(teeWallet.address, true);
 
-      await x402.connect(teeWallet).payBNB(agentId, "/api/test", { value: ethers.parseEther("0.1") });
-      assert.equal(await x402.getPaymentCount(), 1n);
+      await b402.connect(teeWallet).payBNB(agentId, "/api/test", { value: ethers.parseEther("0.1") });
+      assert.equal(await b402.getPaymentCount(), 1n);
     });
 
     it("should only allow owner to call setAuthorizedRelay", async function () {
-      const { x402, outsider, teeWallet } = await deployAll();
+      const { b402, outsider, teeWallet } = await deployAll();
       await assert.rejects(
-        async () => x402.connect(outsider).setAuthorizedRelay(teeWallet.address, true),
+        async () => b402.connect(outsider).setAuthorizedRelay(teeWallet.address, true),
         /OwnableUnauthorizedAccount/
       );
     });
 
     it("should only allow owner to call setRelayRestricted", async function () {
-      const { x402, outsider } = await deployAll();
+      const { b402, outsider } = await deployAll();
       await assert.rejects(
-        async () => x402.connect(outsider).setRelayRestricted(true),
+        async () => b402.connect(outsider).setRelayRestricted(true),
         /OwnableUnauthorizedAccount/
       );
     });
 
     it("should reject zero address for setAuthorizedRelay", async function () {
-      const { x402, ethers } = await deployAll();
+      const { b402, ethers } = await deployAll();
       await assert.rejects(
-        async () => x402.setAuthorizedRelay(ethers.ZeroAddress, true),
+        async () => b402.setAuthorizedRelay(ethers.ZeroAddress, true),
         /zero address/
       );
     });

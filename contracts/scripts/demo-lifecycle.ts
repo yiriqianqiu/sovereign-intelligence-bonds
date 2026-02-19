@@ -7,7 +7,7 @@
  *   3. Register an AI agent (NFA)
  *   4. Agent IPO (issue bonds)
  *   5. Investor buys bonds
- *   6. Agent earns x402 revenue (intelligence payments)
+ *   6. Agent earns b402 revenue (intelligence payments)
  *   7. Distribute dividends to bondholders
  *   8. Investor claims dividends
  *   9. Print summary
@@ -69,10 +69,10 @@ async function main() {
   const controllerAddr = await controller.getAddress();
   console.log("  SIBControllerV2:   " + controllerAddr);
 
-  const x402 = await (await ethers.getContractFactory("X402PaymentReceiverV2")).deploy();
-  await x402.waitForDeployment();
-  const x402Addr = await x402.getAddress();
-  console.log("  X402PaymentV2:     " + x402Addr);
+  const b402 = await (await ethers.getContractFactory("B402PaymentReceiver")).deploy();
+  await b402.waitForDeployment();
+  const b402Addr = await b402.getAddress();
+  console.log("  B402Payment:     " + b402Addr);
 
   console.log();
 
@@ -96,8 +96,8 @@ async function main() {
   await (await dividendVault.setBondManager(bondManagerAddr)).wait();
   console.log("  DividendVaultV2.setBondManager    -> done");
 
-  await (await x402.setController(controllerAddr)).wait();
-  console.log("  X402PaymentV2.setController       -> done");
+  await (await b402.setController(controllerAddr)).wait();
+  console.log("  B402Payment.setController       -> done");
 
   console.log();
 
@@ -185,9 +185,9 @@ async function main() {
   console.log();
 
   // ============================================================
-  // Step 6: Agent earns x402 revenue (intelligence payments)
+  // Step 6: Agent earns b402 revenue (intelligence payments)
   // ============================================================
-  console.log("[6/9] Agent earning revenue (x402 intelligence payments)...");
+  console.log("[6/9] Agent earning revenue (b402 intelligence payments)...");
 
   const paymentAmount = ethers.parseEther("0.01");
   const endpoints = [
@@ -197,7 +197,7 @@ async function main() {
   ];
 
   for (let i = 0; i < 3; i++) {
-    const payTx = await x402.payBNB(agentId, endpoints[i], { value: paymentAmount });
+    const payTx = await b402.payBNB(agentId, endpoints[i], { value: paymentAmount });
     const payReceipt = await payTx.wait();
     console.log("  Payment " + (i + 1) + ": " + ethers.formatEther(paymentAmount) + " BNB -> " + endpoints[i]);
     console.log("           tx: " + payReceipt.hash);
@@ -259,7 +259,7 @@ async function main() {
   console.log("========================================");
   console.log("Agent: " + agentMeta.name + " (ID: " + agentId.toString() + ")");
   console.log("Description: " + agentMeta.description);
-  console.log("Total revenue earned: " + ethers.formatEther(revenueProfile.totalEarned) + " BNB (from " + revenueProfile.totalPayments.toString() + " x402 payments)");
+  console.log("Total revenue earned: " + ethers.formatEther(revenueProfile.totalEarned) + " BNB (from " + revenueProfile.totalPayments.toString() + " b402 payments)");
   console.log("Capital raised (bonds): " + ethers.formatEther(capitalRaised) + " BNB");
   console.log("Evolution level: " + evolutionLevel.toString());
   console.log("Bonds: " + maxSupply.toString() + " total supply, investor holds " + bondsToBuy.toString() + " (" + ((bondsToBuy * 100n) / maxSupply).toString() + "%)");

@@ -4,7 +4,7 @@
  * What gets deployed:
  *   1. TEERegistry (new)
  *   2. SIBControllerV2 (redeploy - added TEE delegation)
- *   3. X402PaymentReceiverV2 (redeploy - added relay restriction)
+ *   3. B402PaymentReceiver (redeploy - added relay restriction)
  *   4. GreenfieldDataVault (redeploy - added TEE support)
  *   5. ComputeMarketplace (redeploy - added TEE support)
  *
@@ -74,14 +74,14 @@ async function main() {
   console.log("  SIBControllerV2:", controllerAddr);
 
   // ============================================================
-  // Step 3: Redeploy X402PaymentReceiverV2
+  // Step 3: Redeploy B402PaymentReceiver
   // ============================================================
-  console.log("\n[3/5] Deploying new X402PaymentReceiverV2 (with relay restriction)...");
-  const X402 = await ethers.getContractFactory("X402PaymentReceiverV2");
-  const x402 = await X402.deploy();
-  await x402.waitForDeployment();
-  const x402Addr = await x402.getAddress();
-  console.log("  X402PaymentReceiverV2:", x402Addr);
+  console.log("\n[3/5] Deploying new B402PaymentReceiver (with relay restriction)...");
+  const B402 = await ethers.getContractFactory("B402PaymentReceiver");
+  const b402 = await B402.deploy();
+  await b402.waitForDeployment();
+  const b402Addr = await b402.getAddress();
+  console.log("  B402PaymentReceiver:", b402Addr);
 
   // ============================================================
   // Step 4: Redeploy GreenfieldDataVault
@@ -138,9 +138,9 @@ async function main() {
   tx = await vault.setController(controllerAddr);
   await tx.wait();
 
-  // X402 -> new controller
-  console.log("[wire 6/11] X402PaymentReceiverV2.setController...");
-  tx = await x402.setController(controllerAddr);
+  // B402 -> new controller
+  console.log("[wire 6/11] B402PaymentReceiver.setController...");
+  tx = await b402.setController(controllerAddr);
   await tx.wait();
 
   // TranchingEngine -> new controller
@@ -155,20 +155,14 @@ async function main() {
   tx = await liquidation.setController(controllerAddr);
   await tx.wait();
 
-  // BondDEX -> new controller
-  console.log("[wire 9/11] BondDEX.setController...");
-  const dex = await ethers.getContractAt(setControllerABI, EXISTING.BondDEX);
-  tx = await dex.setController(controllerAddr);
-  await tx.wait();
-
   // GreenfieldDataVault.setTEERegistry
-  console.log("[wire 10/11] GreenfieldDataVault.setTEERegistry...");
+  console.log("[wire 9/10] GreenfieldDataVault.setTEERegistry...");
   const gfVault = await ethers.getContractAt(setTEERegistryABI, greenfieldAddr);
   tx = await gfVault.setTEERegistry(teeRegistryAddr);
   await tx.wait();
 
   // ComputeMarketplace.setTEERegistry
-  console.log("[wire 11/11] ComputeMarketplace.setTEERegistry...");
+  console.log("[wire 10/10] ComputeMarketplace.setTEERegistry...");
   const computeMkt = await ethers.getContractAt(setTEERegistryABI, computeAddr);
   tx = await computeMkt.setTEERegistry(teeRegistryAddr);
   await tx.wait();
@@ -182,7 +176,7 @@ async function main() {
   console.log("\nNew contracts:");
   console.log("  TEERegistry:            ", teeRegistryAddr);
   console.log("  SIBControllerV2:        ", controllerAddr);
-  console.log("  X402PaymentReceiverV2:  ", x402Addr);
+  console.log("  B402PaymentReceiver:  ", b402Addr);
   console.log("  GreenfieldDataVault:    ", greenfieldAddr);
   console.log("  ComputeMarketplace:     ", computeAddr);
   console.log("\nUnchanged contracts:");

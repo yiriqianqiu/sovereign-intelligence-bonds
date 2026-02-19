@@ -15,19 +15,19 @@ contract MockControllerV2 {
     uint256 public totalBNBReceived;
     uint256 public totalERC20Received;
 
-    function receiveX402PaymentBNB(uint256 agentId) external payable {
+    function receiveB402PaymentBNB(uint256 agentId) external payable {
         lastAgentId = agentId;
         lastBNBAmount = msg.value;
         totalBNBReceived += msg.value;
     }
 
-    function receiveX402PaymentERC20(uint256 agentId, address token, uint256 amount) external {
+    function receiveB402PaymentERC20(uint256 agentId, address token, uint256 amount) external {
         lastAgentId = agentId;
         lastToken = token;
         lastERC20Amount = amount;
         totalERC20Received += amount;
 
-        // Pull tokens from sender (the X402PaymentReceiverV2 contract)
+        // Pull tokens from sender (the B402PaymentReceiver contract)
         IERC20(token).transferFrom(msg.sender, address(this), amount);
     }
 

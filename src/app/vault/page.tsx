@@ -29,14 +29,14 @@ export default function VaultPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Auto-Compound Vault</h1>
-        <p className="mt-1 text-sm text-[rgb(var(--muted-foreground))]">
+        <h1 className="font-heading text-xl font-bold tracking-tight">Auto-Compound Vault</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
           Automatically reinvest dividend earnings
         </p>
       </div>
 
       {/* Description */}
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <h2 className="text-base font-semibold">How it works</h2>
         <p className="mt-2 text-sm leading-relaxed text-[rgb(var(--muted-foreground))]">
           The Auto-Compound Vault accepts your ERC-3475 bond deposits and automatically
@@ -49,14 +49,14 @@ export default function VaultPage() {
 
       {/* Stats placeholder */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="card-glass rounded-xl p-4">
+        <div className="card-glass rounded p-4">
           <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Value Locked</p>
           <p className="stat-value font-mono text-2xl text-gold">--</p>
           <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
             Calculated per bond class
           </p>
         </div>
-        <div className="card-glass rounded-xl p-4">
+        <div className="card-glass rounded p-4">
           <p className="text-xs text-[rgb(var(--muted-foreground))]">Auto-Compound Events</p>
           <p className="stat-value font-mono text-2xl">--</p>
           <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
@@ -66,7 +66,7 @@ export default function VaultPage() {
       </div>
 
       {/* Manual Lookup Form */}
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <h2 className="text-base font-semibold">View Vault Position</h2>
         <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
           Enter a bond class ID and nonce ID to view your vault position and
@@ -84,7 +84,7 @@ export default function VaultPage() {
               value={classIdInput}
               onChange={(e) => setClassIdInput(e.target.value)}
               placeholder="0"
-              className="w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none"
+              className="w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none"
             />
           </div>
           <div className="flex-1">
@@ -97,20 +97,20 @@ export default function VaultPage() {
               value={nonceIdInput}
               onChange={(e) => setNonceIdInput(e.target.value)}
               placeholder="0"
-              className="w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none"
+              className="w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none"
             />
           </div>
           <div className="flex gap-2">
             <button
               onClick={handleViewPosition}
-              className="cursor-pointer rounded-lg bg-[#D4A853]/15 px-6 py-2 text-sm font-semibold text-gold transition-colors hover:bg-[#D4A853]/25"
+              className="cursor-pointer rounded bg-[#D4A853]/15 px-6 py-2 text-sm font-semibold text-gold transition-colors hover:bg-[#D4A853]/25"
             >
               View Position
             </button>
             {viewClassId !== null && (
               <button
                 onClick={handleClear}
-                className="cursor-pointer rounded-lg bg-[rgb(var(--secondary))] px-4 py-2 text-sm font-medium text-[rgb(var(--muted-foreground))] transition-colors hover:bg-[rgb(var(--border))]"
+                className="cursor-pointer rounded bg-[rgb(var(--secondary))] px-4 py-2 text-sm font-medium text-[rgb(var(--muted-foreground))] transition-colors hover:bg-[rgb(var(--border))]"
               >
                 Clear
               </button>

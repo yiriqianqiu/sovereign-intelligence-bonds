@@ -15,21 +15,9 @@ const abi = NFARegistryABI;
 const CREDIT_LABELS = ["Unrated", "C", "B", "A", "AA", "AAA"] as const;
 const STATE_LABELS = ["Registered", "Active", "Suspended", "Deregistered"] as const;
 
-type AgentMetadata = {
-  name: string;
-  description: string;
-  modelHash: string;
-  endpoint: string;
-  registeredAt: bigint;
-};
-
-type RevenueProfile = {
-  totalEarned: bigint;
-  totalPayments: bigint;
-  lastPaymentTime: bigint;
-  sharpeRatio: bigint;
-  sharpeProofHash: `0x${string}`;
-};
+// Return types are positional tuples from abitype
+type AgentMetadataTuple = readonly [string, string, string, string, bigint];
+type RevenueProfileTuple = readonly [bigint, bigint, bigint, bigint, `0x${string}`];
 
 export async function GET() {
   try {
@@ -88,24 +76,24 @@ export async function GET() {
             functionName: "ownerOf",
             args: [tokenId],
           }),
-        ])) as [AgentMetadata, number, number, RevenueProfile, string];
+        ])) as [AgentMetadataTuple, number, number, RevenueProfileTuple, string];
 
         agents.push({
           id: Number(tokenId),
-          name: metadata.name,
-          description: metadata.description,
-          modelHash: metadata.modelHash,
-          endpoint: metadata.endpoint,
-          registeredAt: Number(metadata.registeredAt),
+          name: metadata[0],
+          description: metadata[1],
+          modelHash: metadata[2],
+          endpoint: metadata[3],
+          registeredAt: Number(metadata[4]),
           state: STATE_LABELS[state] ?? "Unknown",
           stateRaw: state,
           creditRating: CREDIT_LABELS[rating] ?? "Unrated",
           creditRatingRaw: rating,
-          totalEarned: revenue.totalEarned.toString(),
-          totalPayments: Number(revenue.totalPayments),
-          lastPaymentTime: Number(revenue.lastPaymentTime),
-          sharpeRatio: Number(revenue.sharpeRatio),
-          sharpeProofHash: revenue.sharpeProofHash,
+          totalEarned: revenue[0].toString(),
+          totalPayments: Number(revenue[1]),
+          lastPaymentTime: Number(revenue[2]),
+          sharpeRatio: Number(revenue[3]),
+          sharpeProofHash: revenue[4],
           owner,
         });
       } catch {

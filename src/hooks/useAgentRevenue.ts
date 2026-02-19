@@ -69,13 +69,13 @@ export function useAgentRevenue(agentId: number | undefined) {
 
   const revenue: RevenueProfile | null = revenueData
     ? (() => {
-        const d = revenueData as { totalEarned: bigint; totalPayments: bigint; lastPaymentTime: bigint; sharpeRatio: bigint; sharpeProofHash: `0x${string}` };
+        const d = revenueData as unknown as readonly [bigint, bigint, bigint, bigint, `0x${string}`];
         return {
-          totalEarned: formatEther(d.totalEarned),
-          totalPayments: Number(d.totalPayments),
-          lastPaymentTime: Number(d.lastPaymentTime),
-          sharpeRatio: formatEther(d.sharpeRatio),
-          sharpeProofHash: d.sharpeProofHash,
+          totalEarned: formatEther(d[0]),
+          totalPayments: Number(d[1]),
+          lastPaymentTime: Number(d[2]),
+          sharpeRatio: formatEther(d[3]),
+          sharpeProofHash: d[4],
         };
       })()
     : null;
@@ -109,13 +109,13 @@ export function useAgentMetadata(agentId: number | undefined) {
 
   const metadata = data
     ? (() => {
-        const d = data as { name: string; description: string; modelHash: string; endpoint: string; registeredAt: bigint };
+        const d = data as unknown as readonly [string, string, string, string, bigint];
         return {
-          name: d.name,
-          description: d.description,
-          modelHash: d.modelHash,
-          endpoint: d.endpoint,
-          registeredAt: Number(d.registeredAt),
+          name: d[0],
+          description: d[1],
+          modelHash: d[2],
+          endpoint: d[3],
+          registeredAt: Number(d[4]),
         };
       })()
     : null;

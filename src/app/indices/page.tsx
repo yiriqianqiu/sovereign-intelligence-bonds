@@ -75,21 +75,21 @@ export default function IndicesPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Index Bonds</h1>
-        <p className="mt-1 text-sm text-[rgb(var(--muted-foreground))]">
+        <h1 className="font-heading text-xl font-bold tracking-tight">Index Bonds</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
           Diversified bond baskets backed by multiple AI agents
         </p>
       </div>
 
       {/* Stats Row */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="card-glass rounded-xl p-4">
+        <div className="card-glass rounded p-4">
           <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Indices</p>
           <p className="stat-value font-mono text-2xl text-gold">
             {countLoading || loading ? "..." : indices.length}
           </p>
         </div>
-        <div className="card-glass rounded-xl p-4">
+        <div className="card-glass rounded p-4">
           <p className="text-xs text-[rgb(var(--muted-foreground))]">Available Indices</p>
           <p className="stat-value font-mono text-2xl text-sage">
             {countLoading || loading ? "..." : activeIndices.length}
@@ -113,10 +113,10 @@ export default function IndicesPage() {
               <IndexCompositionChart indexId={idx.indexId} />
               {/* Action Buttons */}
               <div className="flex gap-3 px-1">
-                <button className="cursor-pointer flex-1 rounded-lg border border-[#D4A853]/30 bg-transparent py-2.5 text-sm font-semibold text-gold transition-colors hover:bg-[#D4A853]/10">
+                <button className="cursor-pointer flex-1 rounded border border-[#D4A853]/30 bg-transparent py-2.5 text-sm font-semibold text-gold transition-colors hover:bg-[#D4A853]/10">
                   Mint
                 </button>
-                <button className="cursor-pointer flex-1 rounded-lg border border-[rgb(var(--border))] bg-transparent py-2.5 text-sm font-semibold text-[rgb(var(--foreground))] transition-colors hover:bg-[rgb(var(--secondary))]">
+                <button className="cursor-pointer flex-1 rounded border border-[rgb(var(--border))] bg-transparent py-2.5 text-sm font-semibold text-[rgb(var(--foreground))] transition-colors hover:bg-[rgb(var(--secondary))]">
                   Redeem
                 </button>
               </div>

@@ -8,7 +8,7 @@ A record of how SIB was built, the reasoning behind key decisions, and the creat
 
 What if AI agents had credit ratings? What if you could invest in an agent's future earnings the same way you'd buy a corporate bond?
 
-SIB makes that possible. We securitize NFA (Non-Fungible Agent) revenue streams into ERC-3475 semi-fungible bonds. Each bond class maps to one agent. Each nonce is a separate issuance batch. Dividends are distributed from x402 payment channels through a pull-over-push vault.
+SIB makes that possible. We securitize NFA (Non-Fungible Agent) revenue streams into ERC-3475 semi-fungible bonds. Each bond class maps to one agent. Each nonce is a separate issuance batch. Dividends are distributed from b402 payment channels through a pull-over-push vault.
 
 The "trick" is using zkML (EZKL) to verify Sharpe ratios on-chain. This gives every agent a verifiable risk-adjusted performance metric -- the foundation of machine credit.
 
@@ -29,24 +29,30 @@ EZKL-generated Halo2 verifiers can exceed 24KB (Solidity's deployment limit). St
 ## Architecture
 
 ```
-SIBController (orchestrator)
-  |-- NFARegistry (BAP-578 + credit ratings)
-  |-- SIBBondManager (ERC-3475)
-  |-- DividendVault (pull-over-push)
-  |-- SharpeVerifier (EZKL Halo2)
-  |-- X402PaymentReceiver (revenue intake)
+SIBControllerV2 (orchestrator + TEE delegation)
+  |-- NFARegistry (BAP-578 + 5D credit + capital evolution)
+  |-- SIBBondManager (ERC-3475 + tranches)
+  |-- DividendVaultV2 (MasterChef accumulator)
+  |-- Halo2Verifier (EZKL on-chain)
+  |-- B402PaymentReceiver (b402 + EIP-712 gasless)
+  |-- TranchingEngine (senior/junior waterfall)
+  |-- BondDEX (limit order book)
+  |-- TEERegistry (TEE delegation + attestation)
+  |-- GreenfieldDataVault (decentralized data)
+  |-- ComputeMarketplace (DePIN compute)
 ```
 
 ## Stats
 
-- 6 core contracts deployed on BSC Testnet
-- 160 tests, 0 failures
-- 10 frontend pages + 5 API routes
-- 9 reusable components (6 shadcn/ui base + SharpeGauge + BondPurchaseModal + DividendClaimButton)
+- 18 contracts deployed on BSC Testnet
+- 707 tests, 0 failures
+- 17 frontend pages + 5 API routes
+- 12 hooks + 7 components
 - All pages read/write on-chain via wagmi v2 (zero mock data)
-- recharts financial visualizations (AreaChart, BarChart)
+- recharts financial visualizations (RadarChart, AreaChart, BarChart, PieChart)
 - zkML pipeline: PyTorch -> ONNX -> EZKL -> Solidity verifier
 - Prover service: FastAPI + Celery + Redis (Docker Compose, 3 services)
+- TEE Agent: Phala dstack (Intel TDX) + Express + viem
 - Design system: warm dark financial aesthetic ("Agent Wall Street")
 
 ## What Makes This Different
@@ -57,10 +63,14 @@ No one has done agent revenue securitization before. This is the gap between "ag
 
 ## Timeline
 
-- Phase 1: Contract core (7 contracts, 160 tests)
-- Phase 2: Frontend MVP (8 pages, 5 APIs, warm dark financial design)
-- Phase 3: zkML pipeline (PyTorch Sharpe model + EZKL prover)
-- Phase 4: Deployment + documentation
-- Phase 5: Security audit + hardening
+- Phase 1: Contract core (5 base contracts, 206 tests)
+- Phase 2: Financial products (TranchingEngine, BondDEX, SIBControllerV2, B402, 132 tests)
+- Phase 3: Advanced features (Governor, Liquidation, AutoCompound, IndexBond, Collateral, 116 tests)
+- Phase 4: zkML pipeline (PyTorch Sharpe model + real EZKL prover service)
+- Phase 5: Frontend (17 pages, 5 APIs, 12 hooks, warm dark financial design)
+- Phase 6: E2E integration tests (12 cross-contract scenarios)
+- Phase 7: Data layer (GreenfieldDataVault, ComputeMarketplace, capital evolution, 114 tests)
+- Phase 8: TEE integration (TEERegistry, Controller delegation, relay whitelist, TEE Agent service, 46 tests)
+- Phase 9: B402 migration (EIP-712 signed payments, gasless Relayer, 28 tests)
 
 Built with Claude Code, quality-first.

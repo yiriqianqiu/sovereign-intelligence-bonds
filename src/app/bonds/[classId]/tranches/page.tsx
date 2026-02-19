@@ -98,14 +98,14 @@ export default function TranchesPage() {
         </div>
 
         <div className="flex min-h-[40vh] items-center justify-center">
-          <div className="card-glass rounded-xl p-10 text-center">
+          <div className="card-glass rounded p-10 text-center">
             <h2 className="text-xl font-bold">Not a Tranched Class</h2>
             <p className="mt-2 text-sm text-[rgb(var(--muted-foreground))]">
               This bond class is not part of a tranche group.
             </p>
             <Link
               href={`/bonds/${classId}`}
-              className="mt-4 inline-block cursor-pointer rounded-lg bg-[#D4A853]/15 px-6 py-2 text-sm font-semibold text-gold transition-colors hover:bg-[#D4A853]/25"
+              className="mt-4 inline-block cursor-pointer rounded bg-[#D4A853]/15 px-6 py-2 text-sm font-semibold text-gold transition-colors hover:bg-[#D4A853]/25"
             >
               Back to Bond Details
             </Link>
@@ -129,8 +129,8 @@ export default function TranchesPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Tranche Comparison</h1>
-        <p className="mt-1 text-sm text-[rgb(var(--muted-foreground))]">
+        <h1 className="font-heading text-xl font-bold tracking-tight">Tranche Comparison</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
           Senior vs Junior tranche analysis for Bond Class #{classId}
           {groupId !== null && (
             <span className="ml-2 font-mono text-xs">/ Group #{groupId}</span>
@@ -143,7 +143,7 @@ export default function TranchesPage() {
 
       {/* Senior Entitlement Calculator */}
       {groupId !== null && (
-        <div className="card-glass rounded-xl p-6">
+        <div className="card-glass rounded p-6">
           <h3 className="text-base font-semibold">Senior Entitlement Calculator</h3>
           <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
             Calculate the senior tranche entitlement based on time elapsed since bond
@@ -162,7 +162,7 @@ export default function TranchesPage() {
                 value={calcNonceId}
                 onChange={(e) => setCalcNonceId(e.target.value)}
                 placeholder="0"
-                className="w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none"
+                className="w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none"
               />
             </div>
             <div className="flex-1">
@@ -176,13 +176,13 @@ export default function TranchesPage() {
                 value={timeDeltaDays}
                 onChange={(e) => setTimeDeltaDays(e.target.value)}
                 placeholder="30"
-                className="w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none"
+                className="w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none"
               />
             </div>
           </div>
 
           {/* Result */}
-          <div className="mt-4 rounded-lg bg-[rgb(var(--secondary))] p-4">
+          <div className="mt-4 rounded bg-[rgb(var(--secondary))] p-4">
             <p className="text-xs text-[rgb(var(--muted-foreground))]">
               Senior Entitlement
             </p>

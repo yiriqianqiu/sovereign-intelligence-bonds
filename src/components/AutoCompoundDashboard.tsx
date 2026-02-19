@@ -17,7 +17,7 @@ export function AutoCompoundDashboard({ classId, nonceId }: AutoCompoundDashboar
 
   if (isLoading) {
     return (
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <p className="text-sm text-[rgb(var(--muted-foreground))]">Loading vault data...</p>
       </div>
     );
@@ -29,7 +29,7 @@ export function AutoCompoundDashboard({ classId, nonceId }: AutoCompoundDashboar
       : "0.0";
 
   return (
-    <div className="card-glass rounded-xl p-6">
+    <div className="card-glass rounded p-6">
       <h3 className="mb-4 text-base font-semibold">
         Auto-Compound Vault
         <span className="ml-2 text-xs text-[rgb(var(--muted-foreground))]">
@@ -58,13 +58,13 @@ export function AutoCompoundDashboard({ classId, nonceId }: AutoCompoundDashboar
 
       {/* Action buttons */}
       <div className="mt-6 flex gap-3">
-        <button className="flex-1 rounded-lg bg-[#D4A853]/10 py-2.5 text-sm font-semibold text-gold transition-colors hover:bg-[#D4A853]/20">
+        <button className="flex-1 rounded bg-[#D4A853]/10 py-2.5 text-sm font-semibold text-gold transition-colors hover:bg-[#D4A853]/20">
           Deposit
         </button>
-        <button className="flex-1 rounded-lg bg-[rgb(var(--secondary))] py-2.5 text-sm font-semibold text-[rgb(var(--foreground))] transition-colors hover:bg-[rgb(var(--border))]">
+        <button className="flex-1 rounded bg-[rgb(var(--secondary))] py-2.5 text-sm font-semibold text-[rgb(var(--foreground))] transition-colors hover:bg-[rgb(var(--border))]">
           Withdraw
         </button>
-        <button className="flex-1 rounded-lg bg-[#5A8A6E]/10 py-2.5 text-sm font-semibold text-sage transition-colors hover:bg-[#5A8A6E]/20">
+        <button className="flex-1 rounded bg-[#5A8A6E]/10 py-2.5 text-sm font-semibold text-sage transition-colors hover:bg-[#5A8A6E]/20">
           Compound
         </button>
       </div>

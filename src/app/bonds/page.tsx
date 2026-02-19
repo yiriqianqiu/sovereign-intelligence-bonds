@@ -90,8 +90,8 @@ export default function BondsPage() {
               functionName: "getAgentMetadata",
               args: [agentId as bigint],
             });
-            const metaTuple = metadata as { name: string; description: string; modelHash: string; endpoint: string; registeredAt: bigint };
-            if (metaTuple.name) agentName = metaTuple.name;
+            const metaTuple = metadata as unknown as readonly [string, string, string, string, bigint];
+            if (metaTuple[0]) agentName = metaTuple[0];
           } catch {
             // Keep default name
           }
@@ -190,24 +190,24 @@ export default function BondsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Bond Market</h1>
-        <p className="mt-1 text-sm text-[rgb(var(--muted-foreground))]">
+        <h1 className="font-heading text-xl font-bold tracking-tight">Bond Market</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
           ERC-3475 bonds backed by AI agent revenue streams
         </p>
       </div>
 
       {/* Stats Row */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="card-glass rounded-xl p-4">
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Bond Classes</p>
+        <div className="rounded border bg-card p-4">
+          <p className="label-mono">Total Bond Classes</p>
           <p className="stat-value font-mono text-2xl text-gold">{totalClassCount}</p>
         </div>
-        <div className="card-glass rounded-xl p-4">
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Bonds Issued</p>
+        <div className="rounded border bg-card p-4">
+          <p className="label-mono">Total Bonds Issued</p>
           <p className="stat-value font-mono text-2xl">{totalIssuedAll.toLocaleString()}</p>
         </div>
-        <div className="card-glass rounded-xl p-4">
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Value</p>
+        <div className="rounded border bg-card p-4">
+          <p className="label-mono">Total Value</p>
           <p className="stat-value font-mono text-2xl">
             {parseFloat(formatEther(totalValueWei)).toFixed(4)} BNB
           </p>
@@ -220,10 +220,10 @@ export default function BondsPage() {
           <button
             key={tab}
             onClick={() => setTrancheFilter(tab)}
-            className={`cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
+            className={`cursor-pointer rounded px-3 py-1.5 text-xs font-medium transition-colors duration-200 ${
               trancheFilter === tab
-                ? "bg-[#D4A853]/10 text-gold"
-                : "text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--secondary))] hover:text-[rgb(var(--foreground))]"
+                ? "text-gold"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab}
@@ -269,7 +269,7 @@ export default function BondsPage() {
               </div>
               <Link
                 href="/market"
-                className="flex cursor-pointer items-center justify-center rounded-lg border border-gold/30 py-2 text-xs font-semibold text-gold transition-colors duration-200 hover:border-gold/60 hover:bg-gold/5"
+                className="flex cursor-pointer items-center justify-center rounded border border-gold/30 py-2 text-xs font-semibold text-gold transition-colors duration-200 hover:border-gold/60 hover:bg-gold/5"
               >
                 Trade on DEX
               </Link>

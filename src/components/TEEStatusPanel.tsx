@@ -70,7 +70,7 @@ export function TEEStatusPanel({ agentId, isOwner }: TEEStatusPanelProps) {
 
   if (isLoading) {
     return (
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <h2 className="text-lg font-semibold">TEE Status</h2>
         <p className="mt-2 text-sm text-[rgb(var(--muted-foreground))]">Loading TEE information...</p>
       </div>
@@ -78,7 +78,7 @@ export function TEEStatusPanel({ agentId, isOwner }: TEEStatusPanelProps) {
   }
 
   return (
-    <div className="card-glass rounded-xl p-6">
+    <div className="card-glass rounded p-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">TEE Status</h2>
         <div className="flex items-center gap-2">
@@ -122,7 +122,7 @@ export function TEEStatusPanel({ agentId, isOwner }: TEEStatusPanelProps) {
               <button
                 onClick={handleRevoke}
                 disabled={revokePending || revokeConfirming}
-                className="cursor-pointer rounded-lg border border-crimson/30 px-4 py-1.5 text-xs font-medium text-crimson transition-colors hover:bg-crimson/10 disabled:cursor-not-allowed disabled:opacity-40"
+                className="cursor-pointer rounded border border-crimson/30 px-4 py-1.5 text-xs font-medium text-crimson transition-colors hover:bg-crimson/10 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {revokePending ? "Confirm..." : revokeConfirming ? "Revoking..." : "Revoke TEE"}
               </button>
@@ -138,12 +138,12 @@ export function TEEStatusPanel({ agentId, isOwner }: TEEStatusPanelProps) {
                   value={newTEEWallet}
                   onChange={(e) => setNewTEEWallet(e.target.value)}
                   placeholder="0x..."
-                  className="flex-1 rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
+                  className="flex-1 rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
                 />
                 <button
                   onClick={handleAuthorize}
                   disabled={authPending || authConfirming || !newTEEWallet.match(/^0x[a-fA-F0-9]{40}$/)}
-                  className="cursor-pointer rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors hover:bg-[#C49A48] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="cursor-pointer rounded bg-gold px-4 py-2 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors hover:bg-[#C49A48] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {authPending ? "Confirm..." : authConfirming ? "Processing..." : "Authorize"}
                 </button>

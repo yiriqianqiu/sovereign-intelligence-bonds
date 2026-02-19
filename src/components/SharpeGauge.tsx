@@ -52,8 +52,8 @@ export function SharpeGauge({
   const config = SIZE_CONFIG[size];
   const { width, height, strokeWidth, fontSize, labelSize, radius } = config;
 
-  // Convert bigint (scaled 1e3 in contract, i.e. 1500 = 1.500)
-  const ratioFloat = Number(sharpeRatio) / 1000;
+  // Convert bigint (scaled 1e18 in contract)
+  const ratioFloat = Number(sharpeRatio) / 1e18;
   // Clamp to 0..3.0 for display
   const clampedRatio = Math.min(Math.max(ratioFloat, 0), 3.0);
   const displayValue = ratioFloat.toFixed(2);
@@ -174,7 +174,7 @@ export function SharpeGauge({
           y={cy - radius * 0.3}
           textAnchor="middle"
           dominantBaseline="central"
-          fontFamily="'Fira Code', monospace"
+          fontFamily="'JetBrains Mono', monospace"
           fontWeight="600"
           fontSize={fontSize}
           fill={gaugeColor}
@@ -189,7 +189,7 @@ export function SharpeGauge({
           y={cy - radius * 0.3 + fontSize * 0.85}
           textAnchor="middle"
           dominantBaseline="central"
-          fontFamily="'DM Sans', sans-serif"
+          fontFamily="'Space Grotesk', sans-serif"
           fontWeight="500"
           fontSize={labelSize}
           fill="rgb(148 140 128)"
@@ -202,7 +202,7 @@ export function SharpeGauge({
           x={cx - radius - strokeWidth / 2}
           y={cy + labelSize + 2}
           textAnchor="middle"
-          fontFamily="'Fira Code', monospace"
+          fontFamily="'JetBrains Mono', monospace"
           fontSize={labelSize * 0.8}
           fill="rgb(148 140 128)"
         >
@@ -212,7 +212,7 @@ export function SharpeGauge({
           x={cx + radius + strokeWidth / 2}
           y={cy + labelSize + 2}
           textAnchor="middle"
-          fontFamily="'Fira Code', monospace"
+          fontFamily="'JetBrains Mono', monospace"
           fontSize={labelSize * 0.8}
           fill="rgb(148 140 128)"
         >

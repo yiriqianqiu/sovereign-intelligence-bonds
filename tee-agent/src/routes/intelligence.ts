@@ -47,7 +47,7 @@ router.post("/api/intelligence/:agentId", async (req: Request, res: Response) =>
       return;
     }
 
-    // Process payment via x402
+    // Process payment via b402
     let txHash: string;
     try {
       txHash = await forwardBNBPayment({

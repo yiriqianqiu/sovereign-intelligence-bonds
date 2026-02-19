@@ -84,13 +84,8 @@ export default function LiquidationsPage() {
         }),
       ]);
 
-      const d = liqData as unknown as {
-        agentId: bigint;
-        triggeredAt: bigint;
-        gracePeriodEnd: bigint;
-        executed: boolean;
-        cancelled: boolean;
-      };
+      const dd = liqData as unknown as readonly [bigint, bigint, bigint, boolean, boolean];
+      const d = { agentId: dd[0], triggeredAt: dd[1], gracePeriodEnd: dd[2], executed: dd[3], cancelled: dd[4] };
 
       // Try to get agent name
       let agentName = `Agent #${agentId}`;
@@ -101,8 +96,8 @@ export default function LiquidationsPage() {
           functionName: "getAgentMetadata",
           args: [BigInt(agentId)],
         });
-        const meta = metadata as { name: string };
-        if (meta.name) agentName = meta.name;
+        const meta = metadata as unknown as readonly [string, string, string, string, bigint];
+        if (meta[0]) agentName = meta[0];
       } catch {
         // Keep default name
       }
@@ -138,22 +133,22 @@ export default function LiquidationsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Liquidations</h1>
-        <p className="mt-1 text-sm text-[rgb(var(--muted-foreground))]">
+        <h1 className="font-heading text-xl font-bold tracking-tight">Liquidations</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
           Monitor at-risk agents and liquidation events
         </p>
       </div>
 
       {/* Stats Row */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="card-glass rounded-xl p-4">
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Grace Period</p>
+        <div className="card-glass rounded p-4">
+          <p className="label-mono">Grace Period</p>
           <p className="stat-value font-mono text-2xl text-gold">
             {graceLoading ? "..." : gracePeriodDays}
           </p>
         </div>
-        <div className="card-glass rounded-xl p-4">
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Active Liquidations</p>
+        <div className="card-glass rounded p-4">
+          <p className="label-mono">Active Liquidations</p>
           <p className="stat-value font-mono text-2xl text-crimson">--</p>
           <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
             Requires event indexing
@@ -162,7 +157,7 @@ export default function LiquidationsPage() {
       </div>
 
       {/* Lookup Form */}
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <h2 className="text-base font-semibold">Lookup Agent Liquidation Status</h2>
         <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">
           Enter an agent ID to check its current liquidation status.
@@ -179,21 +174,21 @@ export default function LiquidationsPage() {
               value={agentIdInput}
               onChange={(e) => setAgentIdInput(e.target.value)}
               placeholder="0"
-              className="w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none"
+              className="w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none"
             />
           </div>
           <div className="flex gap-2">
             <button
               onClick={handleLookup}
               disabled={lookupLoading}
-              className="cursor-pointer rounded-lg bg-[#D4A853]/15 px-6 py-2 text-sm font-semibold text-gold transition-colors hover:bg-[#D4A853]/25 disabled:cursor-not-allowed disabled:opacity-50"
+              className="cursor-pointer rounded bg-[#D4A853]/15 px-6 py-2 text-sm font-semibold text-gold transition-colors hover:bg-[#D4A853]/25 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {lookupLoading ? "Loading..." : "Check Status"}
             </button>
             {lookupResult && (
               <button
                 onClick={handleClear}
-                className="cursor-pointer rounded-lg bg-[rgb(var(--secondary))] px-4 py-2 text-sm font-medium text-[rgb(var(--muted-foreground))] transition-colors hover:bg-[rgb(var(--border))]"
+                className="cursor-pointer rounded bg-[rgb(var(--secondary))] px-3 py-1.5 text-xs font-medium text-[rgb(var(--muted-foreground))] transition-colors hover:bg-[rgb(var(--border))]"
               >
                 Clear
               </button>
@@ -204,14 +199,14 @@ export default function LiquidationsPage() {
 
       {/* Lookup Error */}
       {lookupError && (
-        <div className="card-glass rounded-xl p-4">
+        <div className="card-glass rounded p-4">
           <p className="text-sm text-crimson">{lookupError}</p>
         </div>
       )}
 
       {/* Lookup Result */}
       {lookupResult && (
-        <div className="card-glass rounded-xl p-6">
+        <div className="card-glass rounded p-6">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs text-[rgb(var(--muted-foreground))]">

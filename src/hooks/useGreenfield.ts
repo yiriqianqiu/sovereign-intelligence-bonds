@@ -49,29 +49,19 @@ export function useDataAsset(assetId: number | undefined) {
 
   const asset: DataAsset | null = data
     ? (() => {
-        const d = data as unknown as {
-          agentId: bigint;
-          bucketName: string;
-          objectName: string;
-          contentHash: `0x${string}`;
-          dataType: number;
-          size: bigint;
-          registeredAt: bigint;
-          verified: boolean;
-          active: boolean;
-        };
+        const d = data as unknown as readonly [bigint, string, string, `0x${string}`, number, bigint, bigint, boolean, boolean];
         return {
           assetId: assetId!,
-          agentId: Number(d.agentId),
-          bucketName: d.bucketName,
-          objectName: d.objectName,
-          contentHash: d.contentHash,
-          dataType: d.dataType,
-          dataTypeLabel: DataTypeLabels[d.dataType] ?? "Unknown",
-          size: Number(d.size),
-          registeredAt: Number(d.registeredAt),
-          verified: d.verified,
-          active: d.active,
+          agentId: Number(d[0]),
+          bucketName: d[1],
+          objectName: d[2],
+          contentHash: d[3],
+          dataType: d[4],
+          dataTypeLabel: DataTypeLabels[d[4]] ?? "Unknown",
+          size: Number(d[5]),
+          registeredAt: Number(d[6]),
+          verified: d[7],
+          active: d[8],
         };
       })()
     : null;

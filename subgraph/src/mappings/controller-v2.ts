@@ -3,7 +3,7 @@ import {
   IPOInitiated,
   TranchedIPOInitiated,
   BondsPurchased,
-  X402RevenueReceived,
+  B402RevenueReceived,
   DividendsDistributed,
   SharpeProofVerified,
   BondsRedeemed,
@@ -63,7 +63,7 @@ export function handleBondsPurchased(event: BondsPurchased): void {
   purchase.save();
 }
 
-export function handleX402RevenueReceived(event: X402RevenueReceived): void {
+export function handleB402RevenueReceived(event: B402RevenueReceived): void {
   let id = event.transaction.hash.toHexString() + "-" + event.logIndex.toString();
   let revenue = new RevenueEvent(id);
   revenue.agentId = event.params.agentId;

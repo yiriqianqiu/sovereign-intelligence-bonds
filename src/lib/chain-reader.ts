@@ -66,21 +66,21 @@ export async function getAgentData(agentId: bigint): Promise<AgentData> {
     }),
   ]);
 
-  const md = metadata as { name: string; description: string; modelHash: string; endpoint: string; registeredAt: bigint };
-  const rev = revenue as { totalEarned: bigint; totalPayments: bigint; lastPaymentTime: bigint; sharpeRatio: bigint; sharpeProofHash: `0x${string}` };
+  const md = metadata as unknown as readonly [string, string, string, string, bigint];
+  const rev = revenue as unknown as readonly [bigint, bigint, bigint, bigint, `0x${string}`];
 
   return {
     id: Number(agentId),
-    name: md.name,
-    description: md.description,
-    modelHash: md.modelHash,
-    endpoint: md.endpoint,
-    registeredAt: Number(md.registeredAt),
+    name: md[0],
+    description: md[1],
+    modelHash: md[2],
+    endpoint: md[3],
+    registeredAt: Number(md[4]),
     state: Number(state),
     owner: owner as string,
-    totalEarned: formatEther(rev.totalEarned),
-    totalPayments: Number(rev.totalPayments),
-    sharpeRatio: formatEther(rev.sharpeRatio),
+    totalEarned: formatEther(rev[0]),
+    totalPayments: Number(rev[1]),
+    sharpeRatio: formatEther(rev[3]),
     creditRating: Number(rating),
   };
 }

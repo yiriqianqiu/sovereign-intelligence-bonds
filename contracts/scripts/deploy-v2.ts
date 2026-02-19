@@ -12,7 +12,7 @@
  *   5.  DividendVaultV2
  *   6.  TranchingEngine
  *   7.  SIBControllerV2
- *   8.  X402PaymentReceiverV2
+ *   8.  B402PaymentReceiver
  *   9.  LiquidationEngine
  *   10. BondDEX
  *   11. BondholderGovernor
@@ -108,15 +108,15 @@ async function main() {
   const controllerV2Addr = await controllerV2.getAddress();
   console.log("  SIBControllerV2:", controllerV2Addr);
 
-  // 8. X402PaymentReceiverV2
-  console.log("[8/15] Deploying X402PaymentReceiverV2...");
-  const X402PaymentReceiverV2 = await ethers.getContractFactory(
-    "X402PaymentReceiverV2"
+  // 8. B402PaymentReceiver
+  console.log("[8/15] Deploying B402PaymentReceiver...");
+  const B402PaymentReceiver = await ethers.getContractFactory(
+    "B402PaymentReceiver"
   );
-  const x402v2 = await X402PaymentReceiverV2.deploy();
-  await x402v2.waitForDeployment();
-  const x402v2Addr = await x402v2.getAddress();
-  console.log("  X402PaymentReceiverV2:", x402v2Addr);
+  const b402 = await B402PaymentReceiver.deploy();
+  await b402.waitForDeployment();
+  const b402Addr = await b402.getAddress();
+  console.log("  B402PaymentReceiver:", b402Addr);
 
   // 9. LiquidationEngine
   console.log("[9/15] Deploying LiquidationEngine...");
@@ -256,10 +256,10 @@ async function main() {
   await w7.wait();
   console.log("  [7/10] TranchingEngine.setController -> done");
 
-  // 8. X402PaymentReceiverV2.setController
-  const w8 = await x402v2.setController(controllerV2Addr);
+  // 8. B402PaymentReceiver.setController
+  const w8 = await b402.setController(controllerV2Addr);
   await w8.wait();
-  console.log("  [8/10] X402PaymentReceiverV2.setController -> done");
+  console.log("  [8/10] B402PaymentReceiver.setController -> done");
 
   // 9. LiquidationEngine.setController
   const w9 = await liquidation.setController(controllerV2Addr);
@@ -301,7 +301,7 @@ async function main() {
     DividendVaultV2: vaultV2Addr,
     TranchingEngine: tranchingAddr,
     SIBControllerV2: controllerV2Addr,
-    X402PaymentReceiverV2: x402v2Addr,
+    B402PaymentReceiver: b402Addr,
     LiquidationEngine: liquidationAddr,
     BondDEX: bondDEXAddr,
     BondholderGovernor: governorAddr,

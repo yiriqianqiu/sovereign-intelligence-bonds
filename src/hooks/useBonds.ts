@@ -34,15 +34,18 @@ export function useBondClass(classId: number | undefined) {
   });
 
   const bondClass: BondClass | null = data
-    ? {
-        classId: classId!,
-        agentId: Number((data as bigint[])[0]),
-        couponRateBps: Number((data as bigint[])[1]),
-        maturityPeriod: Number((data as bigint[])[2]),
-        sharpeRatioAtIssue: formatEther((data as bigint[])[3]),
-        maxSupply: Number((data as bigint[])[4]),
-        exists: (data as boolean[])[5] as unknown as boolean,
-      }
+    ? (() => {
+        const d = data as unknown as readonly [bigint, bigint, bigint, bigint, bigint, boolean];
+        return {
+          classId: classId!,
+          agentId: Number(d[0]),
+          couponRateBps: Number(d[1]),
+          maturityPeriod: Number(d[2]),
+          sharpeRatioAtIssue: formatEther(d[3]),
+          maxSupply: Number(d[4]),
+          exists: d[5],
+        };
+      })()
     : null;
 
   return { data: bondClass, isLoading, error, refetch };
@@ -61,14 +64,17 @@ export function useBondNonce(classId: number | undefined, nonceId: number | unde
   });
 
   const nonce: BondNonce | null = data
-    ? {
-        issueTimestamp: Number((data as bigint[])[0]),
-        maturityTimestamp: Number((data as bigint[])[1]),
-        totalIssued: Number((data as bigint[])[2]),
-        pricePerBond: formatEther((data as bigint[])[3]),
-        redeemable: (data as boolean[])[4] as unknown as boolean,
-        exists: (data as boolean[])[5] as unknown as boolean,
-      }
+    ? (() => {
+        const d = data as unknown as readonly [bigint, bigint, bigint, bigint, boolean, boolean];
+        return {
+          issueTimestamp: Number(d[0]),
+          maturityTimestamp: Number(d[1]),
+          totalIssued: Number(d[2]),
+          pricePerBond: formatEther(d[3]),
+          redeemable: d[4],
+          exists: d[5],
+        };
+      })()
     : null;
 
   return { data: nonce, isLoading, error, refetch };

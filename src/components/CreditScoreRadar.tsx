@@ -20,7 +20,7 @@ export function CreditScoreRadar({ agentId }: CreditScoreRadarProps) {
 
   if (scoreLoading || factorsLoading) {
     return (
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <p className="text-sm text-[rgb(var(--muted-foreground))]">Loading credit data...</p>
       </div>
     );
@@ -45,7 +45,7 @@ export function CreditScoreRadar({ agentId }: CreditScoreRadarProps) {
   const compositeScore = score?.score ?? 0;
 
   return (
-    <div className="card-glass rounded-xl p-6">
+    <div className="card-glass rounded p-6">
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold">Credit Score</h3>
         <div className="flex items-center gap-3">

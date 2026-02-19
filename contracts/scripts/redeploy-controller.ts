@@ -12,7 +12,7 @@ const ADDRESSES = {
   SIBBondManager: "0xb3EDaBF3334C37b926b99bAE6D23c8126099baB8",
   DividendVaultV2: "0x66efb45Cd439CF3a216Df8682FFbebDc554729f1",
   TranchingEngine: "0xf70901dA7D9FCDE6aAAF38CcE56D353fA37E0595",
-  X402PaymentReceiverV2: "0xde369D0E9dcac61748d148c562f0C76E8c1b4E99",
+  B402PaymentReceiver: "0xde369D0E9dcac61748d148c562f0C76E8c1b4E99",
   LiquidationEngine: "0xB0a1f8055bb7C276007ccc8E193719375D5b0418",
   BondDEX: "0xB881e50fD22020a1774CAC535f00A77493350271",
 };
@@ -73,13 +73,13 @@ async function main() {
   await tx.wait();
   console.log("  done");
 
-  // 5. Update X402PaymentReceiverV2.setController
-  console.log("[5/6] X402PaymentReceiverV2.setController...");
-  const x402 = await ethers.getContractAt(
+  // 5. Update B402PaymentReceiver.setController
+  console.log("[5/6] B402PaymentReceiver.setController...");
+  const b402 = await ethers.getContractAt(
     ["function setController(address) external"],
-    ADDRESSES.X402PaymentReceiverV2
+    ADDRESSES.B402PaymentReceiver
   );
-  tx = await x402.setController(controllerAddr);
+  tx = await b402.setController(controllerAddr);
   await tx.wait();
   console.log("  done");
 

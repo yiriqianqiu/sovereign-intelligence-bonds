@@ -6,18 +6,16 @@ type CreditRating = "Unrated" | "C" | "B" | "A" | "AA" | "AAA";
 const STATE_LABELS = ["Registered", "Active", "Suspended", "Deregistered"];
 
 function RatingBadge({ rating }: { rating: CreditRating }) {
-  let colorClass: string;
-  if (rating === "AAA" || rating === "AA") {
-    colorClass = "text-gold bg-[#D4A853]/10";
-  } else if (rating === "A" || rating === "B") {
-    colorClass = "text-sage bg-[#5A8A6E]/10";
-  } else if (rating === "C") {
-    colorClass = "text-crimson bg-[#B94137]/10";
-  } else {
-    colorClass = "text-[rgb(var(--muted-foreground))] bg-[rgb(var(--muted))]/50";
-  }
+  const colorMap: Record<string, string> = {
+    AAA: "text-gold",
+    AA: "text-gold",
+    A: "text-sage",
+    B: "text-sage",
+    C: "text-crimson",
+  };
+  const color = colorMap[rating] || "text-muted-foreground";
   return (
-    <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold ${colorClass}`}>
+    <span className={`font-mono text-xs font-medium ${color}`}>
       {rating}
     </span>
   );
@@ -49,47 +47,46 @@ export default function AgentCard({
   return (
     <Link
       href={`/agents/${id}`}
-      className="card-glass cursor-pointer rounded-xl p-5 transition-colors duration-200"
+      className="cursor-pointer rounded border bg-card p-4 transition-colors duration-150 hover:border-gold/30"
     >
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold">{name}</h3>
-          <p className="mt-1 line-clamp-2 text-xs text-[rgb(var(--muted-foreground))]">
+          <div className="flex items-baseline gap-2">
+            <span className="font-mono text-2xs text-muted-foreground">#{id}</span>
+            <h3 className="truncate font-heading text-sm font-semibold">{name}</h3>
+          </div>
+          <p className="mt-1 line-clamp-1 text-2xs text-muted-foreground">
             {description}
           </p>
         </div>
         <RatingBadge rating={creditRating} />
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-3">
+      <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-3">
         <div>
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Sharpe Ratio</p>
-          <p className="stat-value font-mono text-sm">
+          <p className="label-mono">sharpe</p>
+          <p className="mt-0.5 font-mono text-xs font-medium">
             {sharpeRatio > 0 ? sharpeRatio.toFixed(3) : "--"}
           </p>
         </div>
         <div>
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">Total Earned</p>
-          <p className="stat-value font-mono text-sm">{formatEther(totalEarned)} BNB</p>
+          <p className="label-mono">earned</p>
+          <p className="mt-0.5 font-mono text-xs font-medium">{formatEther(totalEarned)}</p>
         </div>
         <div>
-          <p className="text-xs text-[rgb(var(--muted-foreground))]">State</p>
-          <p className="stat-value font-mono text-sm">{STATE_LABELS[state] || "Unknown"}</p>
+          <p className="label-mono">state</p>
+          <p className="mt-0.5 font-mono text-xs font-medium">{STATE_LABELS[state] || "?"}</p>
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-xs text-[rgb(var(--muted-foreground))]">
+      <div className="mt-3 flex items-center justify-between text-2xs">
+        <span className="text-muted-foreground">
           {totalPayments} payments
         </span>
         {hasIPO ? (
-          <span className="rounded-md bg-[#5A8A6E]/10 px-2.5 py-1 text-xs font-medium text-sage">
-            IPO Active
-          </span>
+          <span className="text-sage">ipo:active</span>
         ) : (
-          <span className="rounded-md bg-[rgb(var(--muted))]/50 px-2.5 py-1 text-xs font-medium text-[rgb(var(--muted-foreground))]">
-            No IPO
-          </span>
+          <span className="text-muted-foreground">ipo:none</span>
         )}
       </div>
     </Link>

@@ -156,21 +156,21 @@ export default function DashboardPage() {
             }),
           ]);
 
-          const meta = metadata as { name: string };
-          const rev = revenue as { totalEarned: bigint; sharpeRatio: bigint };
+          const meta = metadata as unknown as readonly [string, string, string, string, bigint];
+          const rev = revenue as unknown as readonly [bigint, bigint, bigint, bigint, `0x${string}`];
 
           agents.push({
             id: tokenId as bigint,
-            name: meta.name,
+            name: meta[0],
             rating: Number(rating),
-            sharpe: rev.sharpeRatio,
-            totalEarned: rev.totalEarned,
+            sharpe: rev[3],
+            totalEarned: rev[0],
           });
 
           // Chart data: revenue per agent
-          const earnedBnb = parseFloat(formatEther(rev.totalEarned));
+          const earnedBnb = parseFloat(formatEther(rev[0]));
           if (earnedBnb > 0) {
-            chartBars.push({ name: meta.name, revenue: earnedBnb });
+            chartBars.push({ name: meta[0], revenue: earnedBnb });
           }
 
           // v2: Count active bond classes via getAgentClassIds
@@ -244,9 +244,9 @@ export default function DashboardPage() {
   if (!isConnected) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="card-glass rounded-xl p-10 text-center">
+        <div className="card-glass rounded p-10 text-center">
           <h2 className="text-xl font-bold">Connect Wallet</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-xs text-muted-foreground">
             Connect your wallet to view the protocol dashboard.
           </p>
         </div>
@@ -268,8 +268,8 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 py-4">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="font-heading text-xl font-bold tracking-tight">Dashboard</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
           Protocol overview and recent activity
         </p>
       </div>
@@ -279,9 +279,9 @@ export default function DashboardPage() {
         {OVERVIEW_STATS.map((stat) => (
           <div
             key={stat.label}
-            className="card-glass rounded-xl p-5 transition-colors duration-200"
+            className="card-glass rounded p-5 transition-colors duration-200"
           >
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+            <p className="label-mono">
               {stat.label}
             </p>
             <p className="stat-value mt-2 text-2xl text-foreground">
@@ -292,7 +292,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Agent Revenue Breakdown */}
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <h2 className="text-lg font-semibold">Agent Revenue Breakdown</h2>
         <p className="mt-1 text-xs text-muted-foreground">
           Total earned revenue per agent (on-chain)
@@ -352,7 +352,7 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-5">
         {/* Recent Activity */}
-        <div className="card-glass rounded-xl p-6 lg:col-span-2">
+        <div className="card-glass rounded p-6 lg:col-span-2">
           <h2 className="text-lg font-semibold">Protocol Info</h2>
           <div className="mt-4 space-y-4">
             <div className="flex items-start justify-between border-b border-border/30 pb-3">
@@ -390,7 +390,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Top Agents Table */}
-        <div className="card-glass rounded-xl p-6 lg:col-span-3">
+        <div className="card-glass rounded p-6 lg:col-span-3">
           <h2 className="text-lg font-semibold">Top Agents</h2>
           {agentsLoading ? (
             <div className="mt-6 text-center text-sm text-muted-foreground">
@@ -423,7 +423,7 @@ export default function DashboardPage() {
                   {topAgents.map((agent) => {
                     const ratingLabel = RATING_LABELS[agent.rating] || "Unrated";
                     const sharpeDisplay = agent.sharpe > 0n
-                      ? (Number(agent.sharpe) / 1000).toFixed(3)
+                      ? (Number(agent.sharpe) / 1e18).toFixed(3)
                       : "--";
                     return (
                       <tr
@@ -467,8 +467,10 @@ export default function DashboardPage() {
             { href: "/vault", label: "Auto-Compound", desc: "Reinvest dividends" },
             { href: "/indices", label: "Index Bonds", desc: "Diversified baskets" },
             { href: "/liquidations", label: "Liquidations", desc: "At-risk agents" },
+            { href: "/data-vault", label: "Data Vault", desc: "Greenfield data assets" },
+            { href: "/compute", label: "Compute", desc: "Agent compute marketplace" },
           ].map(item => (
-            <Link key={item.href} href={item.href} className="card-glass cursor-pointer rounded-xl p-4 transition-colors duration-200">
+            <Link key={item.href} href={item.href} className="card-glass cursor-pointer rounded p-4 transition-colors duration-200">
               <p className="text-sm font-semibold">{item.label}</p>
               <p className="mt-1 text-xs text-[rgb(var(--muted-foreground))]">{item.desc}</p>
             </Link>

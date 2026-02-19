@@ -20,7 +20,7 @@ export function GovernanceProposalCard({ proposalId }: GovernanceProposalCardPro
 
   if (isLoading || !proposal) {
     return (
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <p className="text-sm text-[rgb(var(--muted-foreground))]">Loading proposal...</p>
       </div>
     );
@@ -44,7 +44,7 @@ export function GovernanceProposalCard({ proposalId }: GovernanceProposalCardPro
   const stateStyle = STATE_STYLES[proposal.state] ?? STATE_STYLES[4];
 
   return (
-    <div className="card-glass rounded-xl p-6">
+    <div className="card-glass rounded p-6">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs text-[rgb(var(--muted-foreground))]">Proposal #{proposalId}</p>
@@ -92,10 +92,10 @@ export function GovernanceProposalCard({ proposalId }: GovernanceProposalCardPro
       {/* Vote buttons */}
       {isActive && !hasVoted && (
         <div className="mt-4 flex gap-2">
-          <button className="flex-1 rounded-lg bg-[#D4A853]/10 py-2 text-xs font-semibold text-gold transition-colors hover:bg-[#D4A853]/20">
+          <button className="flex-1 rounded bg-[#D4A853]/10 py-2 text-xs font-semibold text-gold transition-colors hover:bg-[#D4A853]/20">
             Vote For
           </button>
-          <button className="flex-1 rounded-lg bg-[rgb(var(--secondary))] py-2 text-xs font-semibold text-[rgb(var(--muted-foreground))] transition-colors hover:bg-[rgb(var(--border))]">
+          <button className="flex-1 rounded bg-[rgb(var(--secondary))] py-2 text-xs font-semibold text-[rgb(var(--muted-foreground))] transition-colors hover:bg-[rgb(var(--border))]">
             Vote Against
           </button>
         </div>

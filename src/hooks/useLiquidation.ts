@@ -40,19 +40,13 @@ export function useLiquidationStatus(agentId: number | undefined) {
 
   const status: LiquidationStatus | null = liqData
     ? (() => {
-        const d = liqData as unknown as {
-          agentId: bigint;
-          triggeredAt: bigint;
-          gracePeriodEnd: bigint;
-          executed: boolean;
-          cancelled: boolean;
-        };
+        const d = liqData as unknown as readonly [bigint, bigint, bigint, boolean, boolean];
         return {
-          agentId: Number(d.agentId),
-          triggeredAt: Number(d.triggeredAt),
-          gracePeriodEnd: Number(d.gracePeriodEnd),
-          executed: d.executed,
-          cancelled: d.cancelled,
+          agentId: Number(d[0]),
+          triggeredAt: Number(d[1]),
+          gracePeriodEnd: Number(d[2]),
+          executed: d[3],
+          cancelled: d[4],
           isUnderLiquidation: Boolean(isUnderData),
         };
       })()

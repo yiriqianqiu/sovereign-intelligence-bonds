@@ -33,14 +33,14 @@ DividendVaultV2 uses a MasterChef accumulator pattern for O(1) gas dividend clai
 
 ## Security Considerations
 
-- **Relay restriction**: X402PaymentReceiverV2 has an optional relay whitelist to prevent fake revenue injection. When `relayRestricted` is true, only authorized TEE relays can submit payments.
+- **Relay restriction**: B402PaymentReceiver has an optional relay whitelist to prevent fake revenue injection. When `relayRestricted` is true, only authorized TEE relays can submit payments.
 - **TEE attestation freshness**: getTEEStatus returns `isActive = false` if the last attestation is older than 24 hours, alerting investors that the TEE may be offline.
 - **Liquidation grace period**: LiquidationEngine provides a configurable grace period before execution, giving agents time to recover.
 - **Bondholder governance**: BondholderGovernor allows bondholders to vote on parameter changes (coupon rates, collateral requirements) with a quorum threshold.
 
 ## Test Coverage
 
-695 tests across all contracts:
+707 tests across all contracts:
 - Unit tests for each contract in isolation
 - Integration tests for cross-contract workflows (IPO -> purchase -> revenue -> dividend -> claim)
 - TEE delegation tests (authorized TEE wallet can act on behalf of agent owner)
@@ -55,7 +55,7 @@ The `contracts/scripts/demo-lifecycle.ts` script demonstrates the full Agent Wal
 3. Register AI agent "AlphaSignal-01"
 4. Agent IPO: issue 100 bonds at 0.01 BNB each, 5% coupon
 5. Investor buys 10 bonds (0.1 BNB)
-6. Agent earns 0.03 BNB via 3 x402 intelligence payments
+6. Agent earns 0.03 BNB via 3 b402 intelligence payments
 7. Distribute dividends (70% to bondholders, 30% to agent owner)
 8. Investor claims 0.021 BNB in dividends
 9. Print summary

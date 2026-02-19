@@ -26,7 +26,7 @@ function TrancheCard({
   const couponPct = (couponBps / 100).toFixed(1);
 
   return (
-    <div className="card-glass rounded-xl p-5">
+    <div className="card-glass rounded p-5">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold">{label}</h4>
         <span
@@ -76,7 +76,7 @@ export function TrancheComparison({ groupId }: TrancheComparisonProps) {
 
   if (isLoading || !group) {
     return (
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded p-6">
         <p className="text-sm text-[rgb(var(--muted-foreground))]">Loading tranche data...</p>
       </div>
     );

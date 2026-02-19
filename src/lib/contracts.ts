@@ -78,6 +78,20 @@ export const X402PaymentReceiverABI = [
   "event PaymentReceived(address indexed payer, uint256 indexed agentId, string endpoint, uint256 amount)",
 ] as const;
 
+export const B402PaymentReceiverABI = [
+  "function payBNB(uint256 agentId, string endpoint) payable",
+  "function payERC20(uint256 agentId, address token, uint256 amount, string endpoint)",
+  "function payWithSignature(address payer, uint256 agentId, address token, uint256 amount, string endpoint, uint256 deadline, bytes signature)",
+  "function getPaymentCount() view returns (uint256)",
+  "function agentTotalPayments(uint256 agentId, address token) view returns (uint256)",
+  "function nonces(address payer) view returns (uint256)",
+  "function DOMAIN_SEPARATOR() view returns (bytes32)",
+  "function relayRestricted() view returns (bool)",
+  "function authorizedRelays(address relay) view returns (bool)",
+  "event PaymentReceived(address indexed payer, uint256 indexed agentId, address indexed token, string endpoint, uint256 amount)",
+  "event SignedPaymentReceived(address indexed payer, uint256 indexed agentId, address indexed token, string endpoint, uint256 amount, address relayer)",
+] as const;
+
 // ============================================================
 // v2 ABIs
 // ============================================================
@@ -101,7 +115,7 @@ export const SIBControllerV2ABI = [
   "function initiateTranchedIPO(uint256 agentId, uint256 seniorCouponBps, uint256 juniorCouponBps, uint256 maturityPeriod, uint256 seniorMaxSupply, uint256 juniorMaxSupply, address paymentToken, uint256 seniorPricePerBond, uint256 juniorPricePerBond)",
   "function purchaseBondsBNB(uint256 classId, uint256 amount) payable",
   "function purchaseBondsERC20(uint256 classId, uint256 amount)",
-  "function receiveX402PaymentBNB(uint256 agentId) payable",
+  "function receiveB402PaymentBNB(uint256 agentId) payable",
   "function distributeDividends(uint256 classId, uint256 nonceId)",
   "function submitSharpeProof(uint256 agentId, bytes proof, uint256[] instances)",
   "function redeemBonds(uint256 classId, uint256 nonceId, uint256 amount)",
@@ -265,6 +279,18 @@ export const ComputeMarketplaceABI = [
   "event ComputeRented(uint256 indexed rentalId, uint256 indexed agentId, uint256 indexed resourceId, uint256 units, uint256 duration, uint256 totalCost)",
   "event RentalEnded(uint256 indexed rentalId, uint256 refundAmount)",
   "event PaymentClaimed(uint256 indexed rentalId, uint256 providerAmount, uint256 protocolFee)",
+] as const;
+
+export const BondCollateralWrapperABI = [
+  "function wrap(uint256 classId, uint256 nonceId, uint256 amount) returns (uint256)",
+  "function unwrap(uint256 tokenId)",
+  "function getWrappedPosition(uint256 tokenId) view returns (uint256, uint256, uint256)",
+  "function wrappedPositions(uint256 tokenId) view returns (uint256, uint256, uint256)",
+  "function bondManager() view returns (address)",
+  "function balanceOf(address owner) view returns (uint256)",
+  "function ownerOf(uint256 tokenId) view returns (address)",
+  "event Wrapped(uint256 indexed tokenId, address indexed owner, uint256 classId, uint256 nonceId, uint256 amount)",
+  "event Unwrapped(uint256 indexed tokenId, address indexed owner, uint256 classId, uint256 nonceId, uint256 amount)",
 ] as const;
 
 export const TEERegistryABI = [

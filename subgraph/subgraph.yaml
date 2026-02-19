@@ -186,8 +186,8 @@ dataSources:
           handler: handleTranchedIPOInitiated
         - event: BondsPurchased(indexed address,indexed uint256,uint256,uint256,uint256,address)
           handler: handleBondsPurchased
-        - event: X402RevenueReceived(indexed uint256,indexed address,uint256,uint256,uint256)
-          handler: handleX402RevenueReceived
+        - event: B402RevenueReceived(indexed uint256,indexed address,uint256,uint256,uint256)
+          handler: handleB402RevenueReceived
         - event: DividendsDistributed(indexed uint256,uint256,address,uint256)
           handler: handleDividendsDistributed
         - event: SharpeProofVerified(indexed uint256,uint256,bytes32)
@@ -199,25 +199,25 @@ dataSources:
       file: ./src/mappings/controller-v2.ts
 
   - kind: ethereum
-    name: X402PaymentReceiverV2
+    name: B402PaymentReceiver
     network: chapel
     source:
       address: "0xFe053fFa3F3A873Bfc5f65E5000D4e4FcD4C8c1F"
-      abi: X402PaymentReceiverV2
+      abi: B402PaymentReceiver
       startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - X402Payment
+        - B402Payment
       abis:
-        - name: X402PaymentReceiverV2
-          file: ./abis/X402PaymentReceiverV2.json
+        - name: B402PaymentReceiver
+          file: ./abis/B402PaymentReceiver.json
       eventHandlers:
         - event: PaymentReceived(indexed address,indexed uint256,indexed address,string,uint256)
           handler: handlePaymentReceived
-      file: ./src/mappings/x402-v2.ts
+      file: ./src/mappings/b402.ts
 
   - kind: ethereum
     name: BondholderGovernor

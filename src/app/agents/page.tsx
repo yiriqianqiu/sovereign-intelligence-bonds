@@ -140,18 +140,18 @@ export default function AgentsPage() {
             }),
           ]);
 
-          const meta = metadata as { name: string; description: string };
-          const rev = revenue as { totalEarned: bigint; totalPayments: bigint; sharpeRatio: bigint };
+          const meta = metadata as unknown as readonly [string, string, string, string, bigint];
+          const rev = revenue as unknown as readonly [bigint, bigint, bigint, bigint, `0x${string}`];
 
           results.push({
             id: Number(agentId),
-            name: meta.name,
-            description: meta.description,
+            name: meta[0],
+            description: meta[1],
             owner: owner as string,
             creditRating: RATING_LABELS[Number(rating)] || "Unrated",
-            sharpeRatio: Number(rev.sharpeRatio) / 1000,
-            totalEarned: rev.totalEarned,
-            totalPayments: Number(rev.totalPayments),
+            sharpeRatio: Number(rev[3]) / 1e18,
+            totalEarned: rev[0],
+            totalPayments: Number(rev[1]),
             hasIPO: hasIPO as boolean,
             state: Number(state),
           });
@@ -183,7 +183,7 @@ export default function AgentsPage() {
   if (!isConnected) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="card-glass rounded-xl p-10 text-center">
+        <div className="rounded border bg-card p-10 text-center">
           <h2 className="text-xl font-bold">Connect Wallet</h2>
           <p className="mt-2 text-sm text-[rgb(var(--muted-foreground))]">
             Connect your wallet to view registered agents.
@@ -198,14 +198,14 @@ export default function AgentsPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Registered Agents</h1>
-          <p className="mt-1 text-sm text-[rgb(var(--muted-foreground))]">
+          <h1 className="font-heading text-xl font-bold tracking-tight">Registered Agents</h1>
+          <p className="mt-1 text-xs text-muted-foreground">
             NFA-registered AI agents eligible for bond issuance
           </p>
         </div>
         <button
           onClick={() => setShowRegisterForm((prev) => !prev)}
-          className="cursor-pointer rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#C49A48]"
+          className="cursor-pointer rounded bg-gold px-4 py-2 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#C49A48]"
         >
           {showRegisterForm ? "Close" : "Register New Agent"}
         </button>
@@ -213,7 +213,7 @@ export default function AgentsPage() {
 
       {/* Register Agent Form */}
       {showRegisterForm && (
-        <div className="card-glass rounded-xl p-6">
+        <div className="rounded border bg-card p-6">
           <h2 className="text-lg font-semibold">Register New Agent</h2>
           <p className="mt-1 text-sm text-[rgb(var(--muted-foreground))]">
             Register an AI agent as an NFA on-chain to enable bond issuance.
@@ -228,7 +228,7 @@ export default function AgentsPage() {
                 value={regName}
                 onChange={(e) => setRegName(e.target.value)}
                 placeholder="e.g. AlphaTrader-v2"
-                className="mt-1 w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
+                className="mt-1 w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
               />
             </div>
             <div>
@@ -240,7 +240,7 @@ export default function AgentsPage() {
                 value={regEndpoint}
                 onChange={(e) => setRegEndpoint(e.target.value)}
                 placeholder="https://api.example.com/agent"
-                className="mt-1 w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
+                className="mt-1 w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
               />
             </div>
             <div className="sm:col-span-2">
@@ -252,7 +252,7 @@ export default function AgentsPage() {
                 value={regDescription}
                 onChange={(e) => setRegDescription(e.target.value)}
                 placeholder="Describe what this agent does"
-                className="mt-1 w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
+                className="mt-1 w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
               />
             </div>
             <div className="sm:col-span-2">
@@ -264,7 +264,7 @@ export default function AgentsPage() {
                 value={regModelHash}
                 onChange={(e) => setRegModelHash(e.target.value)}
                 placeholder="IPFS hash or model identifier"
-                className="mt-1 w-full rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
+                className="mt-1 w-full rounded border border-[rgb(var(--border))] bg-[rgb(var(--secondary))] px-3 py-2 font-mono text-sm text-[rgb(var(--foreground))] placeholder:text-[rgb(var(--muted-foreground))]/50 focus:border-[#D4A853] focus:outline-none focus:ring-1 focus:ring-[#D4A853]"
               />
             </div>
           </div>
@@ -272,7 +272,7 @@ export default function AgentsPage() {
             <button
               onClick={handleRegister}
               disabled={registerIsPending || registerConfirming || !regName.trim()}
-              className="cursor-pointer rounded-lg bg-gold px-6 py-2.5 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#C49A48] disabled:cursor-not-allowed disabled:opacity-40"
+              className="cursor-pointer rounded bg-gold px-6 py-2.5 text-sm font-semibold text-[rgb(var(--primary-foreground))] transition-colors duration-200 hover:bg-[#C49A48] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {registerIsPending
                 ? "Confirm in Wallet..."
@@ -304,8 +304,8 @@ export default function AgentsPage() {
               onClick={() => setFilterRating(r)}
               className={`cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium transition-colors duration-200 ${
                 filterRating === r
-                  ? "bg-[#D4A853]/15 text-gold"
-                  : "text-[rgb(var(--muted-foreground))] hover:text-[rgb(var(--foreground))]"
+                  ? "text-gold"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {r}
@@ -326,8 +326,8 @@ export default function AgentsPage() {
               onClick={() => setSortBy(s.key)}
               className={`cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium transition-colors duration-200 ${
                 sortBy === s.key
-                  ? "bg-[#D4A853]/15 text-gold"
-                  : "text-[rgb(var(--muted-foreground))] hover:text-[rgb(var(--foreground))]"
+                  ? "text-gold"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {s.label}
