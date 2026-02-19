@@ -350,7 +350,7 @@ export default function AgentDetailPage() {
         })
         .catch(() => setReportLoading(false));
     }
-  }, [paymentSuccess, reportTargetId]);
+  }, [paymentSuccess, reportTargetId, paymentHash]);
 
   function handleCreditReportPayment() {
     const targetId = reportTargetId || id;

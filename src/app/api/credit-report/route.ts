@@ -10,6 +10,11 @@ const client = createPublicClient({
   transport: http(),
 });
 
+// Anti-replay: track consumed txHashes (in-memory; resets on redeploy, acceptable for testnet)
+const consumedTxHashes = new Set<string>();
+
+const MIN_PAYMENT_WEI = 1000000000000000n; // 0.001 BNB
+
 const CREDIT_LABELS = ["Unrated", "C", "B", "A", "AA", "AAA"] as const;
 
 type MetadataTuple = readonly [string, string, string, string, bigint];
@@ -105,6 +110,12 @@ export async function GET(request: Request) {
       );
     }
 
+    // Anti-replay: reject already-consumed txHash
+    const txHashNorm = (txHash as string).toLowerCase();
+    if (consumedTxHashes.has(txHashNorm)) {
+      return Response.json({ error: "This payment transaction has already been used" }, { status: 402 });
+    }
+
     // Verify the payment transaction on-chain
     try {
       const receipt = await client.getTransactionReceipt({ hash: txHash as `0x${string}` });
@@ -116,6 +127,26 @@ export async function GET(request: Request) {
       if (receipt.to?.toLowerCase() !== b402Addr) {
         return Response.json({ error: "Transaction is not a valid B402 payment" }, { status: 402 });
       }
+
+      // Verify minimum payment amount
+      const tx = await client.getTransaction({ hash: txHash as `0x${string}` });
+      if (tx.value < MIN_PAYMENT_WEI) {
+        return Response.json({ error: "Payment amount too low (minimum 0.001 BNB)" }, { status: 402 });
+      }
+
+      // Verify agentId binding via PaymentReceived / VerifiedPaymentReceived event logs
+      const agentIdTopic = "0x" + BigInt(agentIdParam).toString(16).padStart(64, "0");
+      const matchingLog = receipt.logs.find(
+        (log) =>
+          log.address.toLowerCase() === b402Addr &&
+          log.topics[2]?.toLowerCase() === agentIdTopic.toLowerCase()
+      );
+      if (!matchingLog) {
+        return Response.json({ error: "Payment transaction does not reference this agentId" }, { status: 402 });
+      }
+
+      // Mark txHash as consumed
+      consumedTxHashes.add(txHashNorm);
     } catch {
       return Response.json({ error: "Could not verify payment transaction" }, { status: 402 });
     }

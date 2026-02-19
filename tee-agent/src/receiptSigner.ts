@@ -46,22 +46,26 @@ export async function verifyPaymentOnChain(
       };
     }
 
-    // Check that the PaymentReceived event references our agentId
-    // (Parse logs for agentId verification)
+    // Check that PaymentReceived or VerifiedPaymentReceived event references our agentId
     const paymentEventSig = keccak256(
       encodePacked(["string"], ["PaymentReceived(address,uint256,address,string,uint256)"])
+    );
+    const verifiedEventSig = keccak256(
+      encodePacked(["string"], ["VerifiedPaymentReceived(address,uint256,address,string,uint256,bytes32,bytes)"])
     );
     const agentIdTopic = "0x" + BigInt(agentId).toString(16).padStart(64, "0");
     const matchingLog = receipt.logs.find(
       (log) =>
         log.address.toLowerCase() === b402Addr &&
-        log.topics[0] === paymentEventSig &&
+        (log.topics[0] === paymentEventSig || log.topics[0] === verifiedEventSig) &&
         log.topics[2]?.toLowerCase() === agentIdTopic.toLowerCase()
     );
 
     if (!matchingLog) {
-      // Fallback: if we can't parse the event precisely, accept based on tx.to + value
-      console.log(`${LOG_PREFIX} Could not match PaymentReceived event, accepting based on tx target + value`);
+      return {
+        valid: false,
+        reason: `No PaymentReceived/VerifiedPaymentReceived event found for agentId ${agentId}`,
+      };
     }
 
     console.log(`${LOG_PREFIX} Payment verified: ${txHash} from ${tx.from} (${formatEther(tx.value)} BNB)`);

@@ -103,10 +103,13 @@ export async function deployCapitalToCompute(agentId: number): Promise<string | 
           await publicClient.waitForTransactionReceipt({ hash: releaseTx });
           console.log(`${LOG_PREFIX} Capital released: ${releaseTx}`);
         } else {
-          console.log(`${LOG_PREFIX} Available IPO capital: ${formatEther(available)} BNB (need ${formatEther(totalCost)}), using TEE wallet balance`);
+          console.log(`${LOG_PREFIX} Insufficient IPO capital: ${formatEther(available)} BNB available, ${formatEther(totalCost)} BNB required`);
+          console.log(`${LOG_PREFIX} Compute rental aborted -- capital must come from IPO, not TEE wallet`);
+          return null;
         }
       } catch (e) {
-        console.log(`${LOG_PREFIX} Could not release IPO capital, using TEE wallet balance:`, e);
+        console.log(`${LOG_PREFIX} Could not release IPO capital, compute rental aborted:`, e);
+        return null;
       }
     }
 
