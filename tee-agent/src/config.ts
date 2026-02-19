@@ -7,7 +7,7 @@ export const config = {
 
   // Contract addresses
   teeRegistryAddress: process.env.TEE_REGISTRY_ADDRESS as `0x${string}` || "0x437c8314DCCa0eA3B5F66195B5311CEC6d494690",
-  sibControllerAddress: process.env.SIB_CONTROLLER_ADDRESS as `0x${string}` || "0xc6a65c7268980DAAde58Fac12F9a3Ce2D2A881ab",
+  sibControllerAddress: process.env.SIB_CONTROLLER_ADDRESS as `0x${string}` || "0xF71C0a2fFEB12AE11fcbB97fbe3edc5Ea8273F7f",
   b402ReceiverAddress: process.env.B402_RECEIVER_ADDRESS as `0x${string}` || "0x7248Ff93f64B4D0e49914016A91fbF7289dab90e",
   nfaRegistryAddress: process.env.NFA_REGISTRY_ADDRESS as `0x${string}` || "0x802E67532B974ece533702311a66fEE000c1C325",
   greenfieldVaultAddress: process.env.GREENFIELD_VAULT_ADDRESS as `0x${string}` || "0x862CaFca80f90eB7d83dDb5d21a6dbb1FcFc172B",

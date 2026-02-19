@@ -1,7 +1,7 @@
 import { parseAbi, formatEther } from "viem";
 import { config } from "./config.js";
 import { publicClient, getWalletClient } from "./chain.js";
-import { ComputeMarketplaceABI } from "./abis.js";
+import { ComputeMarketplaceABI, SIBControllerV2ABI } from "./abis.js";
 
 const LOG_PREFIX = "[compute]";
 
@@ -80,8 +80,37 @@ export async function deployCapitalToCompute(agentId: number): Promise<string | 
     console.log(`${LOG_PREFIX}   Duration: ${config.computeRentalHours}h`);
     console.log(`${LOG_PREFIX}   Estimated cost: ${formatEther(totalCost)} BNB`);
 
-    // 4. Execute rental
     const walletClient = await getWalletClient();
+
+    // 4. Release IPO capital from Controller to TEE wallet
+    if (totalCost > 0n) {
+      try {
+        const available = await publicClient.readContract({
+          address: config.sibControllerAddress,
+          abi: parseAbi(SIBControllerV2ABI),
+          functionName: "ipoCapital",
+          args: [bigAgentId, "0x0000000000000000000000000000000000000000" as `0x${string}`],
+        }) as bigint;
+
+        if (available >= totalCost) {
+          console.log(`${LOG_PREFIX} Releasing ${formatEther(totalCost)} BNB from Controller IPO capital...`);
+          const releaseTx = await walletClient.writeContract({
+            address: config.sibControllerAddress,
+            abi: parseAbi(SIBControllerV2ABI),
+            functionName: "releaseIPOCapital",
+            args: [bigAgentId, "0x0000000000000000000000000000000000000000" as `0x${string}`, totalCost],
+          });
+          await publicClient.waitForTransactionReceipt({ hash: releaseTx });
+          console.log(`${LOG_PREFIX} Capital released: ${releaseTx}`);
+        } else {
+          console.log(`${LOG_PREFIX} Available IPO capital: ${formatEther(available)} BNB (need ${formatEther(totalCost)}), using TEE wallet balance`);
+        }
+      } catch (e) {
+        console.log(`${LOG_PREFIX} Could not release IPO capital, using TEE wallet balance:`, e);
+      }
+    }
+
+    // 5. Execute rental
     const txHash = await walletClient.writeContract({
       address: config.computeMarketplaceAddress,
       abi: parseAbi(ComputeMarketplaceABI),

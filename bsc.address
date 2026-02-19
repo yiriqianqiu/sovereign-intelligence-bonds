@@ -4,8 +4,8 @@
   "contracts": [
     {
       "name": "SIBControllerV2",
-      "address": "0xc6a65c7268980DAAde58Fac12F9a3Ce2D2A881ab",
-      "explorerLink": "https://testnet.bscscan.com/address/0xc6a65c7268980DAAde58Fac12F9a3Ce2D2A881ab",
+      "address": "0xF71C0a2fFEB12AE11fcbB97fbe3edc5Ea8273F7f",
+      "explorerLink": "https://testnet.bscscan.com/address/0xF71C0a2fFEB12AE11fcbB97fbe3edc5Ea8273F7f",
       "description": "Core controller -- IPO, dividends, proof submission, TEE delegation"
     },
     {

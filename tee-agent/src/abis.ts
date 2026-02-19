@@ -14,6 +14,8 @@ export const SIBControllerV2ABI = [
   "function activeNonce(uint256 classId) view returns (uint256)",
   "function getAgentBondClasses(uint256 agentId) view returns (uint256[])",
   "function hasIPO(uint256 agentId) view returns (bool)",
+  "function releaseIPOCapital(uint256 agentId, address token, uint256 amount) external",
+  "function ipoCapital(uint256 agentId, address token) view returns (uint256)",
 ] as const;
 
 export const B402ReceiverABI = [

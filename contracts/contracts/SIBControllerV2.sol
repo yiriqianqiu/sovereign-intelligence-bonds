@@ -113,6 +113,9 @@ contract SIBControllerV2 is Ownable, ReentrancyGuard, Pausable {
     // Track agent bond classes (for quick lookup)
     mapping(uint256 => uint256[]) public agentBondClasses; // agentId => classId[]
 
+    // IPO capital available for agent to deploy (e.g. buy compute)
+    mapping(uint256 => mapping(address => uint256)) public ipoCapital; // agentId => token => amount
+
     // Events
     event IPOInitiated(uint256 indexed agentId, uint256 indexed classId, uint256 nonceId, uint256 couponRateBps, uint256 pricePerBond, address paymentToken);
     event TranchedIPOInitiated(uint256 indexed agentId, uint256 indexed groupId, uint256 seniorClassId, uint256 juniorClassId);
@@ -124,6 +127,7 @@ contract SIBControllerV2 is Ownable, ReentrancyGuard, Pausable {
     event BondsRedeemed(address indexed holder, uint256 indexed classId, uint256 nonceId, uint256 amount);
     event BondsTransferred(address indexed from, address indexed to, uint256 indexed classId, uint256 nonceId, uint256 amount);
     event BondholderShareAdjusted(uint256 oldBps, uint256 newBps);
+    event IPOCapitalReleased(uint256 indexed agentId, address indexed token, uint256 amount, address indexed recipient);
 
     constructor(
         address _nfaRegistry, address _bondManager, address _dividendVault,
@@ -218,6 +222,7 @@ contract SIBControllerV2 is Ownable, ReentrancyGuard, Pausable {
         // Record capital raised for BAP-578 evolution
         (uint256 agentId,,,,,,, ) = bondManager.bondClasses(classId);
         nfaRegistry.recordCapitalRaised(agentId, totalCost);
+        ipoCapital[agentId][address(0)] += totalCost;
 
         if (msg.value > totalCost) {
             (bool sent,) = payable(msg.sender).call{value: msg.value - totalCost}("");
@@ -247,6 +252,7 @@ contract SIBControllerV2 is Ownable, ReentrancyGuard, Pausable {
         // Record capital raised for BAP-578 evolution
         (uint256 agentId2,,,,,,, ) = bondManager.bondClasses(classId);
         nfaRegistry.recordCapitalRaised(agentId2, totalCost);
+        ipoCapital[agentId2][paymentToken] += totalCost;
 
         emit BondsPurchased(msg.sender, classId, nonceId, amount, totalCost, paymentToken);
     }
@@ -423,6 +429,25 @@ contract SIBControllerV2 is Ownable, ReentrancyGuard, Pausable {
 
     function emergencyPause() external onlyOwner { _pause(); }
     function unpause() external onlyOwner { _unpause(); }
+
+    // --- Capital Release ---
+    function releaseIPOCapital(uint256 agentId, address token, uint256 amount) external nonReentrant whenNotPaused {
+        require(_isAuthorizedForAgent(agentId), "SIBControllerV2: not authorized");
+        require(amount > 0, "SIBControllerV2: zero amount");
+        require(ipoCapital[agentId][token] >= amount, "SIBControllerV2: insufficient capital");
+
+        ipoCapital[agentId][token] -= amount;
+
+        if (token == address(0)) {
+            require(address(this).balance >= amount, "SIBControllerV2: insufficient BNB");
+            (bool sent,) = payable(msg.sender).call{value: amount}("");
+            require(sent, "SIBControllerV2: transfer failed");
+        } else {
+            IERC20(token).safeTransfer(msg.sender, amount);
+        }
+
+        emit IPOCapitalReleased(agentId, token, amount, msg.sender);
+    }
 
     // --- View ---
     function getAgentBondClasses(uint256 agentId) external view returns (uint256[] memory) {

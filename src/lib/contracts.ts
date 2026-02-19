@@ -133,9 +133,12 @@ export const SIBControllerV2ABI = [
   "function getAgentBondClasses(uint256 agentId) view returns (uint256[])",
   "function hasIPO(uint256 agentId) view returns (bool)",
   "function revenuePool(uint256 agentId, address token) view returns (uint256)",
+  "function releaseIPOCapital(uint256 agentId, address token, uint256 amount)",
+  "function ipoCapital(uint256 agentId, address token) view returns (uint256)",
   "function paused() view returns (bool)",
   "event IPOInitiated(uint256 indexed agentId, uint256 indexed classId, uint256 nonceId, uint256 couponRateBps, uint256 pricePerBond, address paymentToken)",
   "event BondsPurchased(address indexed buyer, uint256 indexed classId, uint256 nonceId, uint256 amount, uint256 totalCost, address paymentToken)",
+  "event IPOCapitalReleased(uint256 indexed agentId, address indexed token, uint256 amount, address indexed recipient)",
 ] as const;
 
 export const DividendVaultV2ABI = [
